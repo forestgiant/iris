@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package sourcehub;
+
+service SourceHub {
+    // GetValue expects a source and key and responds with the associated value
+    rpc GetValue(GetValueRequest) returns (GetValueResponse) {}
+
+    // SetValue sets the value for the specified source and key
+    rpc SetValue(SetValueRequest) returns (SetValueResponse) {}
+
+    // Subscribe streams updates to a value for a given source and key
+    rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
+}
+
+message GetValueRequest {
+    string source = 1;
+    string key = 2;
+}
+
+message GetValueResponse {
+    bytes value = 1;
+}
+
+message SetValueRequest {
+    string source = 1;
+    string key = 2;
+    bytes value = 3;
+}
+
+message SetValueResponse {
+    bytes value = 1;
+}
+
+message SubscribeRequest {
+    string source = 1;
+    string key =  2;
+} 
+
+message SubscribeResponse {
+    bytes value = 1;
+}
