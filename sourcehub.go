@@ -19,7 +19,7 @@ type Source interface {
 }
 
 // Marshaller comment
-type Marshaller interface {
+type Marshaller interface { 
 	Marshal(object interface{}) ([]byte, error)
 }
 

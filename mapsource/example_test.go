@@ -3,7 +3,7 @@ package mapsource
 import (
 	"fmt"
 
-	sourcehub "gitlab.fg/otis/source-hub"
+	sourcehub "gitlab.fg/otis/sourcehub"
 )
 
 func ExampleNewMapSource() {

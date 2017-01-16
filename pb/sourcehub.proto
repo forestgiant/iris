@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package sourcehub;
+package pb;
 
 service SourceHub {
     // GetValue expects a source and key and responds with the associated value

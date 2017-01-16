@@ -15,6 +15,7 @@ import (
 	"github.com/forestgiant/semver"
 	"gitlab.fg/go/stela"
 	"gitlab.fg/otis/sourcehub"
+	"gitlab.fg/otis/sourcehub/pb"
 	"gitlab.fg/otis/sourcehub/server"
 
 	fglog "github.com/forestgiant/log"
@@ -88,7 +89,7 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
-		sourcehub.RegisterSourceHubServer(grpcServer, &server.Server{})
+		pb.RegisterSourceHubServer(grpcServer, &server.Server{})
 		errchan <- grpcServer.Serve(l)
 	}()
 
