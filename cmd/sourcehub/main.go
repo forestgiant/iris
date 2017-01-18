@@ -16,14 +16,14 @@ import (
 	"gitlab.fg/go/stela"
 	"gitlab.fg/otis/sourcehub"
 	"gitlab.fg/otis/sourcehub/pb"
-	"gitlab.fg/otis/sourcehub/server"
+	"gitlab.fg/otis/sourcehub/transport"
 
 	fglog "github.com/forestgiant/log"
 	stela_api "gitlab.fg/go/stela/api"
 )
 
 const (
-	version = "0.2.0"                //version represents the semantic version of this service/api
+	version = "0.3.0"                //version represents the semantic version of this service/api
 	timeout = 500 * time.Millisecond //default timeout for context objects
 )
 
@@ -89,7 +89,7 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
-		pb.RegisterSourceHubServer(grpcServer, &server.Server{})
+		pb.RegisterSourceHubServer(grpcServer, &transport.Server{})
 		errchan <- grpcServer.Serve(l)
 	}()
 
