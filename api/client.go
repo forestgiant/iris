@@ -28,7 +28,7 @@ func NewClient(ctx context.Context, serverAddress string) (*Client, error) {
 	return c, nil
 }
 
-// GetSources responds with a stream of objects representing available sources
+// GetSources responds with an array of strings representing sources
 func (c *Client) GetSources(ctx context.Context) ([]string, error) {
 	stream, err := c.rpc.GetSources(ctx, &pb.GetSourcesRequest{})
 	if err != nil {
@@ -68,6 +68,29 @@ func (c *Client) SetValue(ctx context.Context, source string, key string, value 
 		Value:  value,
 	})
 	return err
+}
+
+// GetKeys expects a source and responds with an array of strings representing the available keys
+func (c *Client) GetKeys(ctx context.Context, source string) ([]string, error) {
+	stream, err := c.rpc.GetKeys(ctx, &pb.GetKeysRequest{Source: source})
+	if err != nil {
+		return nil, err
+	}
+
+	var keys []string
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+		keys = append(keys, resp.Key)
+	}
+
+	return keys, nil
 }
 
 // Subscribe streams updates to a value for a given source and key

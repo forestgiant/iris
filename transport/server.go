@@ -101,6 +101,22 @@ func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetVa
 	}, nil
 }
 
+// GetKeys responds with a stream of objects representing available sources
+func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.SourceHub_GetKeysServer) error {
+	source := s.getSourceWithIdentifier(req.Source)
+	keys, err := source.GetKeys()
+	if err != nil {
+		return nil
+	}
+
+	for _, k := range keys {
+		if err := stream.Send(&pb.GetKeysResponse{Key: k}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Sends the provided value to any streams subscribed to the specified source and key
 func (s *Server) notifySubscriptionsOfValue(source string, key string, value []byte) error {
 	for _, stream := range s.subscriptions[source][key] {

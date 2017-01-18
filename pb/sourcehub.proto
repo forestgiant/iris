@@ -12,6 +12,9 @@ service SourceHub {
     // SetValue sets the value for the specified source and key
     rpc SetValue(SetValueRequest) returns (SetValueResponse) {}
 
+    // GetKeys expects a source and responds with a stream of objects representing available keys
+    rpc GetKeys(GetKeysRequest) returns (stream GetKeysResponse) {}
+
     // Subscribe streams updates to a value for a given source and key
     rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
 }
@@ -39,6 +42,14 @@ message SetValueRequest {
 
 message SetValueResponse {
     bytes value = 1;
+}
+
+message GetKeysRequest {
+    string source = 1;
+}
+
+message GetKeysResponse {
+    string key = 1;
 }
 
 message SubscribeRequest {
