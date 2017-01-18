@@ -1,6 +1,8 @@
 package client
 
 import (
+	"io"
+
 	"gitlab.fg/otis/sourcehub/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -27,16 +29,46 @@ func NewClient(ctx context.Context, serverAddress string) (*Client, error) {
 }
 
 // GetValue expects a source and key and responds with the associated value
-func (c *Client) GetValue(ctx context.Context, req *pb.GetValueRequest, opts ...grpc.CallOption) (*pb.GetValueResponse, error) {
-	return c.rpc.GetValue(ctx, req, opts...)
+func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byte, error) {
+	resp, err := c.rpc.GetValue(ctx, &pb.GetValueRequest{
+		Source: source,
+		Key:    key,
+	})
+	return resp.Value, err
 }
 
 // SetValue sets the value for the specified source and key
-func (c *Client) SetValue(ctx context.Context, req *pb.SetValueRequest, opts ...grpc.CallOption) (*pb.SetValueResponse, error) {
-	return c.rpc.SetValue(ctx, req, opts...)
+func (c *Client) SetValue(ctx context.Context, source string, key string, value []byte) error {
+	_, err := c.rpc.SetValue(ctx, &pb.SetValueRequest{
+		Source: source,
+		Key:    key,
+		Value:  value,
+	})
+	return err
 }
 
 // Subscribe streams updates to a value for a given source and key
-func (c *Client) Subscribe(ctx context.Context, req *pb.SubscribeRequest, opts ...grpc.CallOption) (pb.SourceHub_SubscribeClient, error) {
-	return c.rpc.Subscribe(ctx, req, opts...)
+func (c *Client) Subscribe(ctx context.Context, source string, key string, handler func(value []byte)) error {
+	stream, err := c.rpc.Subscribe(ctx, &pb.SubscribeRequest{
+		Source: source,
+		Key:    key,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return err
+		}
+		handler(resp.Value)
+	}
+
+	return err
 }
