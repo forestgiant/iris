@@ -3,6 +3,9 @@ syntax = "proto3";
 package pb;
 
 service SourceHub {
+    // GetSources responds with a stream of objects representing available sources
+    rpc GetSources(GetSourcesRequest) returns (stream GetSourcesResponse) {}    
+
     // GetValue expects a source and key and responds with the associated value
     rpc GetValue(GetValueRequest) returns (GetValueResponse) {}
 
@@ -11,6 +14,12 @@ service SourceHub {
 
     // Subscribe streams updates to a value for a given source and key
     rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
+}
+
+message GetSourcesRequest {}
+
+message GetSourcesResponse {
+    string source = 1;
 }
 
 message GetValueRequest {

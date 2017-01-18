@@ -50,6 +50,19 @@ func (s *Server) getSourceWithIdentifier(identifier string) sourcehub.Source {
 	return source
 }
 
+// GetSources responds with a stream of objects representing available sources
+func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.SourceHub_GetSourcesServer) error {
+	s.sourcesMutex.Lock()
+	defer s.sourcesMutex.Unlock()
+
+	for source := range s.sources {
+		if err := stream.Send(&pb.GetSourcesResponse{Source: source}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GetValue expects a source and key and responds with the associated value
 func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
 	source := s.getSourceWithIdentifier(req.Source)

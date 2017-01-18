@@ -28,6 +28,29 @@ func NewClient(ctx context.Context, serverAddress string) (*Client, error) {
 	return c, nil
 }
 
+// GetSources responds with a stream of objects representing available sources
+func (c *Client) GetSources(ctx context.Context) ([]string, error) {
+	stream, err := c.rpc.GetSources(ctx, &pb.GetSourcesRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	var sources []string
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			return nil, err
+		}
+		sources = append(sources, resp.Source)
+	}
+
+	return sources, nil
+}
+
 // GetValue expects a source and key and responds with the associated value
 func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byte, error) {
 	resp, err := c.rpc.GetValue(ctx, &pb.GetValueRequest{

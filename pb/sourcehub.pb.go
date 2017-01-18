@@ -9,6 +9,8 @@ It is generated from these files:
 	pb/sourcehub.proto
 
 It has these top-level messages:
+	GetSourcesRequest
+	GetSourcesResponse
 	GetValueRequest
 	GetValueResponse
 	SetValueRequest
@@ -38,6 +40,30 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type GetSourcesRequest struct {
+}
+
+func (m *GetSourcesRequest) Reset()                    { *m = GetSourcesRequest{} }
+func (m *GetSourcesRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetSourcesRequest) ProtoMessage()               {}
+func (*GetSourcesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+type GetSourcesResponse struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *GetSourcesResponse) Reset()                    { *m = GetSourcesResponse{} }
+func (m *GetSourcesResponse) String() string            { return proto.CompactTextString(m) }
+func (*GetSourcesResponse) ProtoMessage()               {}
+func (*GetSourcesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *GetSourcesResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
 type GetValueRequest struct {
 	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
 	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
@@ -46,7 +72,7 @@ type GetValueRequest struct {
 func (m *GetValueRequest) Reset()                    { *m = GetValueRequest{} }
 func (m *GetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetValueRequest) ProtoMessage()               {}
-func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *GetValueRequest) GetSource() string {
 	if m != nil {
@@ -69,7 +95,7 @@ type GetValueResponse struct {
 func (m *GetValueResponse) Reset()                    { *m = GetValueResponse{} }
 func (m *GetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetValueResponse) ProtoMessage()               {}
-func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *GetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -87,7 +113,7 @@ type SetValueRequest struct {
 func (m *SetValueRequest) Reset()                    { *m = SetValueRequest{} }
 func (m *SetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*SetValueRequest) ProtoMessage()               {}
-func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *SetValueRequest) GetSource() string {
 	if m != nil {
@@ -117,7 +143,7 @@ type SetValueResponse struct {
 func (m *SetValueResponse) Reset()                    { *m = SetValueResponse{} }
 func (m *SetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*SetValueResponse) ProtoMessage()               {}
-func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *SetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -134,7 +160,7 @@ type SubscribeRequest struct {
 func (m *SubscribeRequest) Reset()                    { *m = SubscribeRequest{} }
 func (m *SubscribeRequest) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeRequest) ProtoMessage()               {}
-func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *SubscribeRequest) GetSource() string {
 	if m != nil {
@@ -157,7 +183,7 @@ type SubscribeResponse struct {
 func (m *SubscribeResponse) Reset()                    { *m = SubscribeResponse{} }
 func (m *SubscribeResponse) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeResponse) ProtoMessage()               {}
-func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *SubscribeResponse) GetValue() []byte {
 	if m != nil {
@@ -167,6 +193,8 @@ func (m *SubscribeResponse) GetValue() []byte {
 }
 
 func init() {
+	proto.RegisterType((*GetSourcesRequest)(nil), "pb.GetSourcesRequest")
+	proto.RegisterType((*GetSourcesResponse)(nil), "pb.GetSourcesResponse")
 	proto.RegisterType((*GetValueRequest)(nil), "pb.GetValueRequest")
 	proto.RegisterType((*GetValueResponse)(nil), "pb.GetValueResponse")
 	proto.RegisterType((*SetValueRequest)(nil), "pb.SetValueRequest")
@@ -186,6 +214,8 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for SourceHub service
 
 type SourceHubClient interface {
+	// GetSources responds with a stream of objects representing available sources
+	GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (SourceHub_GetSourcesClient, error)
 	// GetValue expects a source and key and responds with the associated value
 	GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
 	// SetValue sets the value for the specified source and key
@@ -200,6 +230,38 @@ type sourceHubClient struct {
 
 func NewSourceHubClient(cc *grpc.ClientConn) SourceHubClient {
 	return &sourceHubClient{cc}
+}
+
+func (c *sourceHubClient) GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (SourceHub_GetSourcesClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[0], c.cc, "/pb.SourceHub/GetSources", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &sourceHubGetSourcesClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type SourceHub_GetSourcesClient interface {
+	Recv() (*GetSourcesResponse, error)
+	grpc.ClientStream
+}
+
+type sourceHubGetSourcesClient struct {
+	grpc.ClientStream
+}
+
+func (x *sourceHubGetSourcesClient) Recv() (*GetSourcesResponse, error) {
+	m := new(GetSourcesResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *sourceHubClient) GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error) {
@@ -221,7 +283,7 @@ func (c *sourceHubClient) SetValue(ctx context.Context, in *SetValueRequest, opt
 }
 
 func (c *sourceHubClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (SourceHub_SubscribeClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[0], c.cc, "/pb.SourceHub/Subscribe", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[1], c.cc, "/pb.SourceHub/Subscribe", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +317,8 @@ func (x *sourceHubSubscribeClient) Recv() (*SubscribeResponse, error) {
 // Server API for SourceHub service
 
 type SourceHubServer interface {
+	// GetSources responds with a stream of objects representing available sources
+	GetSources(*GetSourcesRequest, SourceHub_GetSourcesServer) error
 	// GetValue expects a source and key and responds with the associated value
 	GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error)
 	// SetValue sets the value for the specified source and key
@@ -265,6 +329,27 @@ type SourceHubServer interface {
 
 func RegisterSourceHubServer(s *grpc.Server, srv SourceHubServer) {
 	s.RegisterService(&_SourceHub_serviceDesc, srv)
+}
+
+func _SourceHub_GetSources_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetSourcesRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SourceHubServer).GetSources(m, &sourceHubGetSourcesServer{stream})
+}
+
+type SourceHub_GetSourcesServer interface {
+	Send(*GetSourcesResponse) error
+	grpc.ServerStream
+}
+
+type sourceHubGetSourcesServer struct {
+	grpc.ServerStream
+}
+
+func (x *sourceHubGetSourcesServer) Send(m *GetSourcesResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _SourceHub_GetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -339,6 +424,11 @@ var _SourceHub_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
+			StreamName:    "GetSources",
+			Handler:       _SourceHub_GetSources_Handler,
+			ServerStreams: true,
+		},
+		{
 			StreamName:    "Subscribe",
 			Handler:       _SourceHub_Subscribe_Handler,
 			ServerStreams: true,
@@ -350,20 +440,22 @@ var _SourceHub_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("pb/sourcehub.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 229 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0x12, 0x2a, 0x48, 0xd2, 0x2f,
-	0xce, 0x2f, 0x2d, 0x4a, 0x4e, 0xcd, 0x28, 0x4d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62,
-	0x2a, 0x48, 0x52, 0xb2, 0xe6, 0xe2, 0x77, 0x4f, 0x2d, 0x09, 0x4b, 0xcc, 0x29, 0x4d, 0x0d, 0x4a,
-	0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x11, 0x12, 0xe3, 0x62, 0x83, 0xa8, 0x94, 0x60, 0x54, 0x60, 0xd4,
-	0xe0, 0x0c, 0x82, 0xf2, 0x84, 0x04, 0xb8, 0x98, 0xb3, 0x53, 0x2b, 0x25, 0x98, 0xc0, 0x82, 0x20,
-	0xa6, 0x92, 0x06, 0x97, 0x00, 0x42, 0x73, 0x71, 0x41, 0x7e, 0x5e, 0x71, 0xaa, 0x90, 0x08, 0x17,
-	0x6b, 0x19, 0x48, 0x00, 0xac, 0x99, 0x27, 0x08, 0xc2, 0x51, 0x0a, 0xe4, 0xe2, 0x0f, 0x26, 0xd7,
-	0x1a, 0x84, 0x91, 0xcc, 0xc8, 0x46, 0x6a, 0x70, 0x09, 0x04, 0x13, 0x67, 0xb9, 0x0d, 0x97, 0x40,
-	0x70, 0x69, 0x52, 0x71, 0x72, 0x51, 0x66, 0x12, 0x19, 0x9e, 0xd4, 0xe4, 0x12, 0x44, 0xd2, 0x8d,
-	0xcf, 0x22, 0xa3, 0xdd, 0x8c, 0x5c, 0x9c, 0xc1, 0x60, 0x73, 0x3c, 0x4a, 0x93, 0x84, 0xcc, 0xb9,
-	0x38, 0x60, 0xa1, 0x23, 0x24, 0xac, 0x57, 0x90, 0xa4, 0x87, 0x16, 0xd0, 0x52, 0x22, 0xa8, 0x82,
-	0x10, 0xa3, 0x95, 0x18, 0x40, 0x1a, 0x83, 0x51, 0x34, 0x06, 0x63, 0xd3, 0x18, 0x8c, 0xa9, 0xd1,
-	0x86, 0x8b, 0x13, 0xee, 0x54, 0x21, 0x88, 0x22, 0x34, 0x7f, 0x4b, 0x89, 0xa2, 0x89, 0xc2, 0xf4,
-	0x1a, 0x30, 0x26, 0xb1, 0x81, 0x53, 0x85, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xa3, 0x86, 0x83,
-	0x5b, 0x2b, 0x02, 0x00, 0x00,
+	// 269 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x92, 0x4f, 0x4b, 0xc3, 0x40,
+	0x14, 0xc4, 0x4d, 0x8b, 0xc5, 0x0c, 0x42, 0xd3, 0xd7, 0x3f, 0x94, 0x9c, 0x64, 0x4f, 0x11, 0x24,
+	0x8a, 0x1e, 0x3c, 0x58, 0xf0, 0x58, 0xaf, 0x66, 0xc1, 0xbb, 0x5b, 0x1e, 0x28, 0x8a, 0x59, 0xb3,
+	0x59, 0xc1, 0xef, 0xee, 0x41, 0x92, 0x4d, 0xcd, 0x36, 0x55, 0x29, 0xbd, 0x65, 0x27, 0xef, 0x37,
+	0x93, 0x9d, 0x17, 0x90, 0x56, 0xe7, 0x26, 0xb7, 0xc5, 0x8a, 0x9f, 0xac, 0x4a, 0x75, 0x91, 0x97,
+	0x39, 0xf5, 0xb4, 0x12, 0x63, 0x8c, 0x96, 0x5c, 0xca, 0xfa, 0x8d, 0xc9, 0xf8, 0xdd, 0xb2, 0x29,
+	0xc5, 0x19, 0xc8, 0x17, 0x8d, 0xce, 0xdf, 0x0c, 0xd3, 0x0c, 0x03, 0xe7, 0x30, 0x0f, 0x4e, 0x82,
+	0x24, 0xcc, 0x9a, 0x93, 0xb8, 0xc1, 0x70, 0xc9, 0xe5, 0xc3, 0xe3, 0xab, 0xe5, 0xc6, 0xe0, 0xaf,
+	0x51, 0x8a, 0xd0, 0x7f, 0xe1, 0xcf, 0x79, 0xaf, 0x16, 0xab, 0x47, 0x91, 0x20, 0x6a, 0xe1, 0x26,
+	0x68, 0x82, 0xc3, 0x8f, 0x4a, 0xa8, 0xe1, 0xe3, 0xcc, 0x1d, 0xc4, 0x3d, 0x86, 0x72, 0xdf, 0x98,
+	0xd6, 0xb2, 0xef, 0x5b, 0x26, 0x88, 0xe4, 0x6e, 0xe1, 0x0b, 0x44, 0xd2, 0x2a, 0xb3, 0x2a, 0x9e,
+	0xd5, 0x1e, 0x97, 0x3c, 0xc5, 0xc8, 0xa3, 0xff, 0x0b, 0xba, 0xfc, 0x0a, 0x10, 0xba, 0xe2, 0xef,
+	0xac, 0xa2, 0x5b, 0xa0, 0x5d, 0x04, 0x4d, 0x53, 0xad, 0xd2, 0xad, 0x6d, 0xc5, 0xb3, 0xae, 0xec,
+	0x02, 0xc4, 0xc1, 0x45, 0x40, 0xd7, 0x38, 0x5a, 0xd7, 0x4b, 0xe3, 0x66, 0xce, 0xaf, 0x30, 0x9e,
+	0x6c, 0x8a, 0x6b, 0xb4, 0x02, 0xe5, 0x06, 0x28, 0x7f, 0x03, 0xe5, 0x36, 0xb8, 0x40, 0xf8, 0x73,
+	0x57, 0x72, 0x43, 0x9d, 0xe2, 0xe2, 0x69, 0x47, 0x6d, 0xbf, 0x57, 0x0d, 0xea, 0x3f, 0xf3, 0xea,
+	0x3b, 0x00, 0x00, 0xff, 0xff, 0x01, 0xb3, 0x34, 0xe8, 0xaf, 0x02, 0x00, 0x00,
 }
