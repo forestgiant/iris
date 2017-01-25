@@ -17,6 +17,7 @@ type Client struct {
 }
 
 // NewClient returns a new sourcehub GRPC client for the given server address.
+// The client's Close method should be called when the returned client is no longer needed.
 func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption) (*Client, error) {
 	var err error
 	c := &Client{}
@@ -40,6 +41,7 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 // it will override the virtual host name of authority (e.g. :authority header field)
 // in requests. This field is ignored if a certificateAuthority is not provided,
 // which is interpreted as the desire to establish an insecure connection.
+// The client's Close method should be called when the returned client is no longer needed.
 func NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride string, certificateAuthority string) (*Client, error) {
 	var opts []grpc.DialOption
 	if len(certificateAuthority) > 0 {
@@ -51,6 +53,11 @@ func NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride 
 	}
 
 	return NewClient(ctx, serverAddress, opts)
+}
+
+// Close tears down the client's underlying connections
+func (c *Client) Close() error {
+	return c.conn.Close()
 }
 
 // GetSources responds with an array of strings representing sources

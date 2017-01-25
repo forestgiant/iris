@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	version = "0.6.0"                //version represents the semantic version of this service/api
+	version = "0.7.0"                //version represents the semantic version of this service/api
 	timeout = 500 * time.Millisecond //default timeout for context objects
 )
 
