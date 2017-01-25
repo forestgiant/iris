@@ -1,31 +1,56 @@
 package api
 
 import (
+	"fmt"
 	"io"
 
 	"gitlab.fg/otis/sourcehub/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
-//Client implements the generated sourcehub.SourceHubClient interface
+// Client implements the generated sourcehub.SourceHubClient interface
 type Client struct {
 	conn *grpc.ClientConn
 	rpc  pb.SourceHubClient
 }
 
-//NewClient returns a new sourcehub grpc client
-func NewClient(ctx context.Context, serverAddress string) (*Client, error) {
+// NewClient returns a new sourcehub GRPC client for the given server address.
+func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption) (*Client, error) {
 	var err error
 	c := &Client{}
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	if len(opts) == 0 {
+		opts = append(opts, grpc.WithInsecure())
+	}
+
 	if c.conn, err = grpc.Dial(serverAddress, opts...); err != nil {
 		return nil, err
 	}
 
 	c.rpc = pb.NewSourceHubClient(c.conn)
 	return c, nil
+}
+
+// NewTLSClient returns a new sourcehub GRPC client for the given server address.
+// The certificateAuthority field allows you to provide a root certificate authority
+// to use when verifying the remote server's identity.
+// The serverNameOverride field is for testing only. If set to a non empty string,
+// it will override the virtual host name of authority (e.g. :authority header field)
+// in requests. This field is ignored if a certificateAuthority is not provided,
+// which is interpreted as the desire to establish an insecure connection.
+func NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride string, certificateAuthority string) (*Client, error) {
+	var opts []grpc.DialOption
+	if len(certificateAuthority) > 0 {
+		creds, err := credentials.NewClientTLSFromFile(certificateAuthority, serverNameOverride)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to generate credentials %v", err)
+		}
+		opts = append(opts, grpc.WithTransportCredentials(creds))
+	}
+
+	return NewClient(ctx, serverAddress, opts)
 }
 
 // GetSources responds with an array of strings representing sources
