@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	version = "0.7.1"                //version represents the semantic version of this service/api
+	version = "0.7.2"                //version represents the semantic version of this service/api
 	timeout = 500 * time.Millisecond //default timeout for context objects
 )
 
@@ -82,16 +82,18 @@ func main() {
 	// Obtain an available port
 	port, err := portutil.GetUniqueTCP()
 	if err != nil {
-		logger.Error("unable to obtain open port")
+		logger.Error("unable to obtain open port", err)
 		os.Exit(1)
 	}
 	logger = logger.With("port", port)
 
 	// Register service with Stela api
 	var client *stela_api.Client
-	service := new(stela.Service)
-	service.Name = sourcehub.DefaultServiceName
-	service.Port = int32(port)
+	service := &stela.Service{
+		Name: sourcehub.DefaultServiceName,
+		IPv4: "localhost",
+		Port: int32(port),
+	}
 	if !*noStelaPtr {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 		defer cancelFunc()
@@ -129,7 +131,7 @@ func main() {
 
 	// Serve our remote procedures
 	go func() {
-		l, err := net.Listen("tcp", fmt.Sprintf(":%d", service.Port))
+		l, err := net.Listen("tcp", service.IPv4Address())
 		if err != nil {
 			errchan <- err
 		}
