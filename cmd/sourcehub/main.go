@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	version = "0.7.2"                //version represents the semantic version of this service/api
+	version = "0.7.3"                //version represents the semantic version of this service/api
 	timeout = 500 * time.Millisecond //default timeout for context objects
 )
 
@@ -91,7 +91,6 @@ func main() {
 	var client *stela_api.Client
 	service := &stela.Service{
 		Name: sourcehub.DefaultServiceName,
-		IPv4: "localhost",
 		Port: int32(port),
 	}
 	if !*noStelaPtr {
