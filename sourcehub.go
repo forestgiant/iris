@@ -15,11 +15,13 @@ type Source interface {
 	SetKeyValuePair(kvp KeyValuePair) error
 	Get(key string) (value []byte, err error)
 	GetKeyValuePair(key string) (KeyValuePair, error)
+	Remove(key string) error
+	RemoveKeyValuePair(kvp KeyValuePair) error
 	GetKeys() ([]string, error)
 }
 
 // Marshaller comment
-type Marshaller interface { 
+type Marshaller interface {
 	Marshal(object interface{}) ([]byte, error)
 }
 

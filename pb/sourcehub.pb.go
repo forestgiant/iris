@@ -9,16 +9,30 @@ It is generated from these files:
 	sourcehub.proto
 
 It has these top-level messages:
+	ConnectRequest
+	ConnectResponse
+	ListenRequest
+	Update
 	GetSourcesRequest
 	GetSourcesResponse
 	GetValueRequest
 	GetValueResponse
 	SetValueRequest
 	SetValueResponse
+	RemoveValueRequest
+	RemoveValueResponse
+	RemoveSourceRequest
+	RemoveSourceResponse
 	GetKeysRequest
 	GetKeysResponse
 	SubscribeRequest
 	SubscribeResponse
+	SubscribeKeyRequest
+	SubscribeKeyResponse
+	UnsubscribeRequest
+	UnsubscribeResponse
+	UnsubscribeKeyRequest
+	UnsubscribeKeyResponse
 */
 package pb
 
@@ -42,13 +56,93 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type ConnectRequest struct {
+}
+
+func (m *ConnectRequest) Reset()                    { *m = ConnectRequest{} }
+func (m *ConnectRequest) String() string            { return proto.CompactTextString(m) }
+func (*ConnectRequest) ProtoMessage()               {}
+func (*ConnectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+type ConnectResponse struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+}
+
+func (m *ConnectResponse) Reset()                    { *m = ConnectResponse{} }
+func (m *ConnectResponse) String() string            { return proto.CompactTextString(m) }
+func (*ConnectResponse) ProtoMessage()               {}
+func (*ConnectResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *ConnectResponse) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+type ListenRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+}
+
+func (m *ListenRequest) Reset()                    { *m = ListenRequest{} }
+func (m *ListenRequest) String() string            { return proto.CompactTextString(m) }
+func (*ListenRequest) ProtoMessage()               {}
+func (*ListenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *ListenRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+type Update struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
+	Value  []byte `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+func (m *Update) Reset()                    { *m = Update{} }
+func (m *Update) String() string            { return proto.CompactTextString(m) }
+func (*Update) ProtoMessage()               {}
+func (*Update) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *Update) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *Update) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+func (m *Update) GetValue() []byte {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
 type GetSourcesRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
 }
 
 func (m *GetSourcesRequest) Reset()                    { *m = GetSourcesRequest{} }
 func (m *GetSourcesRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetSourcesRequest) ProtoMessage()               {}
-func (*GetSourcesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*GetSourcesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *GetSourcesRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
 
 type GetSourcesResponse struct {
 	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
@@ -57,7 +151,7 @@ type GetSourcesResponse struct {
 func (m *GetSourcesResponse) Reset()                    { *m = GetSourcesResponse{} }
 func (m *GetSourcesResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetSourcesResponse) ProtoMessage()               {}
-func (*GetSourcesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*GetSourcesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *GetSourcesResponse) GetSource() string {
 	if m != nil {
@@ -67,14 +161,22 @@ func (m *GetSourcesResponse) GetSource() string {
 }
 
 type GetValueRequest struct {
-	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
 }
 
 func (m *GetValueRequest) Reset()                    { *m = GetValueRequest{} }
 func (m *GetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetValueRequest) ProtoMessage()               {}
-func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *GetValueRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
 
 func (m *GetValueRequest) GetSource() string {
 	if m != nil {
@@ -97,7 +199,7 @@ type GetValueResponse struct {
 func (m *GetValueResponse) Reset()                    { *m = GetValueResponse{} }
 func (m *GetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetValueResponse) ProtoMessage()               {}
-func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *GetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -107,15 +209,23 @@ func (m *GetValueResponse) GetValue() []byte {
 }
 
 type SetValueRequest struct {
-	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
-	Value  []byte `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
+	Value   []byte `protobuf:"bytes,4,opt,name=value,proto3" json:"value,omitempty"`
 }
 
 func (m *SetValueRequest) Reset()                    { *m = SetValueRequest{} }
 func (m *SetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*SetValueRequest) ProtoMessage()               {}
-func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+
+func (m *SetValueRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
 
 func (m *SetValueRequest) GetSource() string {
 	if m != nil {
@@ -145,7 +255,7 @@ type SetValueResponse struct {
 func (m *SetValueResponse) Reset()                    { *m = SetValueResponse{} }
 func (m *SetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*SetValueResponse) ProtoMessage()               {}
-func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *SetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -154,14 +264,134 @@ func (m *SetValueResponse) GetValue() []byte {
 	return nil
 }
 
+type RemoveValueRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
+}
+
+func (m *RemoveValueRequest) Reset()                    { *m = RemoveValueRequest{} }
+func (m *RemoveValueRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoveValueRequest) ProtoMessage()               {}
+func (*RemoveValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *RemoveValueRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *RemoveValueRequest) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *RemoveValueRequest) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+type RemoveValueResponse struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
+}
+
+func (m *RemoveValueResponse) Reset()                    { *m = RemoveValueResponse{} }
+func (m *RemoveValueResponse) String() string            { return proto.CompactTextString(m) }
+func (*RemoveValueResponse) ProtoMessage()               {}
+func (*RemoveValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *RemoveValueResponse) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *RemoveValueResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *RemoveValueResponse) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+type RemoveSourceRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *RemoveSourceRequest) Reset()                    { *m = RemoveSourceRequest{} }
+func (m *RemoveSourceRequest) String() string            { return proto.CompactTextString(m) }
+func (*RemoveSourceRequest) ProtoMessage()               {}
+func (*RemoveSourceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *RemoveSourceRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *RemoveSourceRequest) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+type RemoveSourceResponse struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *RemoveSourceResponse) Reset()                    { *m = RemoveSourceResponse{} }
+func (m *RemoveSourceResponse) String() string            { return proto.CompactTextString(m) }
+func (*RemoveSourceResponse) ProtoMessage()               {}
+func (*RemoveSourceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *RemoveSourceResponse) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *RemoveSourceResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
 type GetKeysRequest struct {
-	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
 }
 
 func (m *GetKeysRequest) Reset()                    { *m = GetKeysRequest{} }
 func (m *GetKeysRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetKeysRequest) ProtoMessage()               {}
-func (*GetKeysRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*GetKeysRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *GetKeysRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
 
 func (m *GetKeysRequest) GetSource() string {
 	if m != nil {
@@ -177,7 +407,7 @@ type GetKeysResponse struct {
 func (m *GetKeysResponse) Reset()                    { *m = GetKeysResponse{} }
 func (m *GetKeysResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetKeysResponse) ProtoMessage()               {}
-func (*GetKeysResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*GetKeysResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
 
 func (m *GetKeysResponse) GetKey() string {
 	if m != nil {
@@ -187,14 +417,21 @@ func (m *GetKeysResponse) GetKey() string {
 }
 
 type SubscribeRequest struct {
-	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
-	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
 }
 
 func (m *SubscribeRequest) Reset()                    { *m = SubscribeRequest{} }
 func (m *SubscribeRequest) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeRequest) ProtoMessage()               {}
-func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+func (m *SubscribeRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
 
 func (m *SubscribeRequest) GetSource() string {
 	if m != nil {
@@ -203,40 +440,199 @@ func (m *SubscribeRequest) GetSource() string {
 	return ""
 }
 
-func (m *SubscribeRequest) GetKey() string {
+type SubscribeResponse struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *SubscribeResponse) Reset()                    { *m = SubscribeResponse{} }
+func (m *SubscribeResponse) String() string            { return proto.CompactTextString(m) }
+func (*SubscribeResponse) ProtoMessage()               {}
+func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
+
+func (m *SubscribeResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+type SubscribeKeyRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
+}
+
+func (m *SubscribeKeyRequest) Reset()                    { *m = SubscribeKeyRequest{} }
+func (m *SubscribeKeyRequest) String() string            { return proto.CompactTextString(m) }
+func (*SubscribeKeyRequest) ProtoMessage()               {}
+func (*SubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+
+func (m *SubscribeKeyRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *SubscribeKeyRequest) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *SubscribeKeyRequest) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
-type SubscribeResponse struct {
-	Value []byte `protobuf:"bytes,1,opt,name=value,proto3" json:"value,omitempty"`
+type SubscribeKeyResponse struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
 }
 
-func (m *SubscribeResponse) Reset()                    { *m = SubscribeResponse{} }
-func (m *SubscribeResponse) String() string            { return proto.CompactTextString(m) }
-func (*SubscribeResponse) ProtoMessage()               {}
-func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (m *SubscribeKeyResponse) Reset()                    { *m = SubscribeKeyResponse{} }
+func (m *SubscribeKeyResponse) String() string            { return proto.CompactTextString(m) }
+func (*SubscribeKeyResponse) ProtoMessage()               {}
+func (*SubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
 
-func (m *SubscribeResponse) GetValue() []byte {
+func (m *SubscribeKeyResponse) GetSource() string {
 	if m != nil {
-		return m.Value
+		return m.Source
 	}
-	return nil
+	return ""
+}
+
+func (m *SubscribeKeyResponse) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+type UnsubscribeRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *UnsubscribeRequest) Reset()                    { *m = UnsubscribeRequest{} }
+func (m *UnsubscribeRequest) String() string            { return proto.CompactTextString(m) }
+func (*UnsubscribeRequest) ProtoMessage()               {}
+func (*UnsubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
+
+func (m *UnsubscribeRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *UnsubscribeRequest) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+type UnsubscribeResponse struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+}
+
+func (m *UnsubscribeResponse) Reset()                    { *m = UnsubscribeResponse{} }
+func (m *UnsubscribeResponse) String() string            { return proto.CompactTextString(m) }
+func (*UnsubscribeResponse) ProtoMessage()               {}
+func (*UnsubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
+
+func (m *UnsubscribeResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+type UnsubscribeKeyRequest struct {
+	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
+	Source  string `protobuf:"bytes,2,opt,name=source" json:"source,omitempty"`
+	Key     string `protobuf:"bytes,3,opt,name=key" json:"key,omitempty"`
+}
+
+func (m *UnsubscribeKeyRequest) Reset()                    { *m = UnsubscribeKeyRequest{} }
+func (m *UnsubscribeKeyRequest) String() string            { return proto.CompactTextString(m) }
+func (*UnsubscribeKeyRequest) ProtoMessage()               {}
+func (*UnsubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
+
+func (m *UnsubscribeKeyRequest) GetSession() string {
+	if m != nil {
+		return m.Session
+	}
+	return ""
+}
+
+func (m *UnsubscribeKeyRequest) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *UnsubscribeKeyRequest) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+type UnsubscribeKeyResponse struct {
+	Source string `protobuf:"bytes,1,opt,name=source" json:"source,omitempty"`
+	Key    string `protobuf:"bytes,2,opt,name=key" json:"key,omitempty"`
+}
+
+func (m *UnsubscribeKeyResponse) Reset()                    { *m = UnsubscribeKeyResponse{} }
+func (m *UnsubscribeKeyResponse) String() string            { return proto.CompactTextString(m) }
+func (*UnsubscribeKeyResponse) ProtoMessage()               {}
+func (*UnsubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{23} }
+
+func (m *UnsubscribeKeyResponse) GetSource() string {
+	if m != nil {
+		return m.Source
+	}
+	return ""
+}
+
+func (m *UnsubscribeKeyResponse) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
 }
 
 func init() {
+	proto.RegisterType((*ConnectRequest)(nil), "sourcehub.pb.ConnectRequest")
+	proto.RegisterType((*ConnectResponse)(nil), "sourcehub.pb.ConnectResponse")
+	proto.RegisterType((*ListenRequest)(nil), "sourcehub.pb.ListenRequest")
+	proto.RegisterType((*Update)(nil), "sourcehub.pb.Update")
 	proto.RegisterType((*GetSourcesRequest)(nil), "sourcehub.pb.GetSourcesRequest")
 	proto.RegisterType((*GetSourcesResponse)(nil), "sourcehub.pb.GetSourcesResponse")
 	proto.RegisterType((*GetValueRequest)(nil), "sourcehub.pb.GetValueRequest")
 	proto.RegisterType((*GetValueResponse)(nil), "sourcehub.pb.GetValueResponse")
 	proto.RegisterType((*SetValueRequest)(nil), "sourcehub.pb.SetValueRequest")
 	proto.RegisterType((*SetValueResponse)(nil), "sourcehub.pb.SetValueResponse")
+	proto.RegisterType((*RemoveValueRequest)(nil), "sourcehub.pb.RemoveValueRequest")
+	proto.RegisterType((*RemoveValueResponse)(nil), "sourcehub.pb.RemoveValueResponse")
+	proto.RegisterType((*RemoveSourceRequest)(nil), "sourcehub.pb.RemoveSourceRequest")
+	proto.RegisterType((*RemoveSourceResponse)(nil), "sourcehub.pb.RemoveSourceResponse")
 	proto.RegisterType((*GetKeysRequest)(nil), "sourcehub.pb.GetKeysRequest")
 	proto.RegisterType((*GetKeysResponse)(nil), "sourcehub.pb.GetKeysResponse")
 	proto.RegisterType((*SubscribeRequest)(nil), "sourcehub.pb.SubscribeRequest")
 	proto.RegisterType((*SubscribeResponse)(nil), "sourcehub.pb.SubscribeResponse")
+	proto.RegisterType((*SubscribeKeyRequest)(nil), "sourcehub.pb.SubscribeKeyRequest")
+	proto.RegisterType((*SubscribeKeyResponse)(nil), "sourcehub.pb.SubscribeKeyResponse")
+	proto.RegisterType((*UnsubscribeRequest)(nil), "sourcehub.pb.UnsubscribeRequest")
+	proto.RegisterType((*UnsubscribeResponse)(nil), "sourcehub.pb.UnsubscribeResponse")
+	proto.RegisterType((*UnsubscribeKeyRequest)(nil), "sourcehub.pb.UnsubscribeKeyRequest")
+	proto.RegisterType((*UnsubscribeKeyResponse)(nil), "sourcehub.pb.UnsubscribeKeyResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -250,16 +646,32 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for SourceHub service
 
 type SourceHubClient interface {
+	// Connect responds with a session identifier to be used for subsequent requests
+	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
+	// Listen responds with a stream of objects representing source, key, value updates
+	Listen(ctx context.Context, in *ListenRequest, opts ...grpc.CallOption) (SourceHub_ListenClient, error)
 	// GetSources responds with a stream of objects representing available sources
 	GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (SourceHub_GetSourcesClient, error)
-	// GetValue expects a source and key and responds with the associated value
-	GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
-	// SetValue sets the value for the specified source and key
-	SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error)
 	// GetKeys expects a source and responds with a stream of objects representing available keys
 	GetKeys(ctx context.Context, in *GetKeysRequest, opts ...grpc.CallOption) (SourceHub_GetKeysClient, error)
-	// Subscribe streams updates to a value for a given source and key
-	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (SourceHub_SubscribeClient, error)
+	// SetValue sets the value for the specified source and key
+	SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error)
+	// GetValue expects a source and key and responds with the associated value
+	GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error)
+	// RemoveValue removes the specified value from the provided source
+	RemoveValue(ctx context.Context, in *RemoveValueRequest, opts ...grpc.CallOption) (*RemoveValueResponse, error)
+	// RemoveSource removes the specified source
+	RemoveSource(ctx context.Context, in *RemoveSourceRequest, opts ...grpc.CallOption) (*RemoveSourceResponse, error)
+	// Subscribe indicates that the client wishes to be notified of all updates for the specified source
+	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error)
+	// SubscribeKey indicates that the client wishes to be notified of updates associated with
+	// a specific key from the specified source
+	SubscribeKey(ctx context.Context, in *SubscribeKeyRequest, opts ...grpc.CallOption) (*SubscribeKeyResponse, error)
+	// Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
+	Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error)
+	// UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
+	// with a specific key from the specified source
+	UnsubscribeKey(ctx context.Context, in *UnsubscribeKeyRequest, opts ...grpc.CallOption) (*UnsubscribeKeyResponse, error)
 }
 
 type sourceHubClient struct {
@@ -270,8 +682,49 @@ func NewSourceHubClient(cc *grpc.ClientConn) SourceHubClient {
 	return &sourceHubClient{cc}
 }
 
+func (c *sourceHubClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
+	out := new(ConnectResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/Connect", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) Listen(ctx context.Context, in *ListenRequest, opts ...grpc.CallOption) (SourceHub_ListenClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[0], c.cc, "/sourcehub.pb.SourceHub/Listen", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &sourceHubListenClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type SourceHub_ListenClient interface {
+	Recv() (*Update, error)
+	grpc.ClientStream
+}
+
+type sourceHubListenClient struct {
+	grpc.ClientStream
+}
+
+func (x *sourceHubListenClient) Recv() (*Update, error) {
+	m := new(Update)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *sourceHubClient) GetSources(ctx context.Context, in *GetSourcesRequest, opts ...grpc.CallOption) (SourceHub_GetSourcesClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[0], c.cc, "/sourcehub.pb.SourceHub/GetSources", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[1], c.cc, "/sourcehub.pb.SourceHub/GetSources", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -302,26 +755,8 @@ func (x *sourceHubGetSourcesClient) Recv() (*GetSourcesResponse, error) {
 	return m, nil
 }
 
-func (c *sourceHubClient) GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error) {
-	out := new(GetValueResponse)
-	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/GetValue", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *sourceHubClient) SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error) {
-	out := new(SetValueResponse)
-	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/SetValue", in, out, c.cc, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *sourceHubClient) GetKeys(ctx context.Context, in *GetKeysRequest, opts ...grpc.CallOption) (SourceHub_GetKeysClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[1], c.cc, "/sourcehub.pb.SourceHub/GetKeys", opts...)
+	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[2], c.cc, "/sourcehub.pb.SourceHub/GetKeys", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -352,55 +787,150 @@ func (x *sourceHubGetKeysClient) Recv() (*GetKeysResponse, error) {
 	return m, nil
 }
 
-func (c *sourceHubClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (SourceHub_SubscribeClient, error) {
-	stream, err := grpc.NewClientStream(ctx, &_SourceHub_serviceDesc.Streams[2], c.cc, "/sourcehub.pb.SourceHub/Subscribe", opts...)
+func (c *sourceHubClient) SetValue(ctx context.Context, in *SetValueRequest, opts ...grpc.CallOption) (*SetValueResponse, error) {
+	out := new(SetValueResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/SetValue", in, out, c.cc, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &sourceHubSubscribeClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
+	return out, nil
 }
 
-type SourceHub_SubscribeClient interface {
-	Recv() (*SubscribeResponse, error)
-	grpc.ClientStream
-}
-
-type sourceHubSubscribeClient struct {
-	grpc.ClientStream
-}
-
-func (x *sourceHubSubscribeClient) Recv() (*SubscribeResponse, error) {
-	m := new(SubscribeResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
+func (c *sourceHubClient) GetValue(ctx context.Context, in *GetValueRequest, opts ...grpc.CallOption) (*GetValueResponse, error) {
+	out := new(GetValueResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/GetValue", in, out, c.cc, opts...)
+	if err != nil {
 		return nil, err
 	}
-	return m, nil
+	return out, nil
+}
+
+func (c *sourceHubClient) RemoveValue(ctx context.Context, in *RemoveValueRequest, opts ...grpc.CallOption) (*RemoveValueResponse, error) {
+	out := new(RemoveValueResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/RemoveValue", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) RemoveSource(ctx context.Context, in *RemoveSourceRequest, opts ...grpc.CallOption) (*RemoveSourceResponse, error) {
+	out := new(RemoveSourceResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/RemoveSource", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (*SubscribeResponse, error) {
+	out := new(SubscribeResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/Subscribe", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) SubscribeKey(ctx context.Context, in *SubscribeKeyRequest, opts ...grpc.CallOption) (*SubscribeKeyResponse, error) {
+	out := new(SubscribeKeyResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/SubscribeKey", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error) {
+	out := new(UnsubscribeResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/Unsubscribe", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sourceHubClient) UnsubscribeKey(ctx context.Context, in *UnsubscribeKeyRequest, opts ...grpc.CallOption) (*UnsubscribeKeyResponse, error) {
+	out := new(UnsubscribeKeyResponse)
+	err := grpc.Invoke(ctx, "/sourcehub.pb.SourceHub/UnsubscribeKey", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 // Server API for SourceHub service
 
 type SourceHubServer interface {
+	// Connect responds with a session identifier to be used for subsequent requests
+	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
+	// Listen responds with a stream of objects representing source, key, value updates
+	Listen(*ListenRequest, SourceHub_ListenServer) error
 	// GetSources responds with a stream of objects representing available sources
 	GetSources(*GetSourcesRequest, SourceHub_GetSourcesServer) error
-	// GetValue expects a source and key and responds with the associated value
-	GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error)
-	// SetValue sets the value for the specified source and key
-	SetValue(context.Context, *SetValueRequest) (*SetValueResponse, error)
 	// GetKeys expects a source and responds with a stream of objects representing available keys
 	GetKeys(*GetKeysRequest, SourceHub_GetKeysServer) error
-	// Subscribe streams updates to a value for a given source and key
-	Subscribe(*SubscribeRequest, SourceHub_SubscribeServer) error
+	// SetValue sets the value for the specified source and key
+	SetValue(context.Context, *SetValueRequest) (*SetValueResponse, error)
+	// GetValue expects a source and key and responds with the associated value
+	GetValue(context.Context, *GetValueRequest) (*GetValueResponse, error)
+	// RemoveValue removes the specified value from the provided source
+	RemoveValue(context.Context, *RemoveValueRequest) (*RemoveValueResponse, error)
+	// RemoveSource removes the specified source
+	RemoveSource(context.Context, *RemoveSourceRequest) (*RemoveSourceResponse, error)
+	// Subscribe indicates that the client wishes to be notified of all updates for the specified source
+	Subscribe(context.Context, *SubscribeRequest) (*SubscribeResponse, error)
+	// SubscribeKey indicates that the client wishes to be notified of updates associated with
+	// a specific key from the specified source
+	SubscribeKey(context.Context, *SubscribeKeyRequest) (*SubscribeKeyResponse, error)
+	// Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
+	Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error)
+	// UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
+	// with a specific key from the specified source
+	UnsubscribeKey(context.Context, *UnsubscribeKeyRequest) (*UnsubscribeKeyResponse, error)
 }
 
 func RegisterSourceHubServer(s *grpc.Server, srv SourceHubServer) {
 	s.RegisterService(&_SourceHub_serviceDesc, srv)
+}
+
+func _SourceHub_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).Connect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/Connect",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).Connect(ctx, req.(*ConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceHub_Listen_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(ListenRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SourceHubServer).Listen(m, &sourceHubListenServer{stream})
+}
+
+type SourceHub_ListenServer interface {
+	Send(*Update) error
+	grpc.ServerStream
+}
+
+type sourceHubListenServer struct {
+	grpc.ServerStream
+}
+
+func (x *sourceHubListenServer) Send(m *Update) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _SourceHub_GetSources_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -424,42 +954,6 @@ func (x *sourceHubGetSourcesServer) Send(m *GetSourcesResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _SourceHub_GetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetValueRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SourceHubServer).GetValue(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/sourcehub.pb.SourceHub/GetValue",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SourceHubServer).GetValue(ctx, req.(*GetValueRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SourceHub_SetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetValueRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SourceHubServer).SetValue(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/sourcehub.pb.SourceHub/SetValue",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SourceHubServer).SetValue(ctx, req.(*SetValueRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SourceHub_GetKeys_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetKeysRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -481,25 +975,148 @@ func (x *sourceHubGetKeysServer) Send(m *GetKeysResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _SourceHub_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SubscribeRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _SourceHub_SetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetValueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(SourceHubServer).Subscribe(m, &sourceHubSubscribeServer{stream})
+	if interceptor == nil {
+		return srv.(SourceHubServer).SetValue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/SetValue",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).SetValue(ctx, req.(*SetValueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type SourceHub_SubscribeServer interface {
-	Send(*SubscribeResponse) error
-	grpc.ServerStream
+func _SourceHub_GetValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetValueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).GetValue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/GetValue",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).GetValue(ctx, req.(*GetValueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-type sourceHubSubscribeServer struct {
-	grpc.ServerStream
+func _SourceHub_RemoveValue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveValueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).RemoveValue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/RemoveValue",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).RemoveValue(ctx, req.(*RemoveValueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
-func (x *sourceHubSubscribeServer) Send(m *SubscribeResponse) error {
-	return x.ServerStream.SendMsg(m)
+func _SourceHub_RemoveSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).RemoveSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/RemoveSource",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).RemoveSource(ctx, req.(*RemoveSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceHub_Subscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscribeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).Subscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/Subscribe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).Subscribe(ctx, req.(*SubscribeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceHub_SubscribeKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubscribeKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).SubscribeKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/SubscribeKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).SubscribeKey(ctx, req.(*SubscribeKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceHub_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsubscribeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).Unsubscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/Unsubscribe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).Unsubscribe(ctx, req.(*UnsubscribeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SourceHub_UnsubscribeKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsubscribeKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SourceHubServer).UnsubscribeKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/sourcehub.pb.SourceHub/UnsubscribeKey",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SourceHubServer).UnsubscribeKey(ctx, req.(*UnsubscribeKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _SourceHub_serviceDesc = grpc.ServiceDesc{
@@ -507,15 +1124,48 @@ var _SourceHub_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*SourceHubServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetValue",
-			Handler:    _SourceHub_GetValue_Handler,
+			MethodName: "Connect",
+			Handler:    _SourceHub_Connect_Handler,
 		},
 		{
 			MethodName: "SetValue",
 			Handler:    _SourceHub_SetValue_Handler,
 		},
+		{
+			MethodName: "GetValue",
+			Handler:    _SourceHub_GetValue_Handler,
+		},
+		{
+			MethodName: "RemoveValue",
+			Handler:    _SourceHub_RemoveValue_Handler,
+		},
+		{
+			MethodName: "RemoveSource",
+			Handler:    _SourceHub_RemoveSource_Handler,
+		},
+		{
+			MethodName: "Subscribe",
+			Handler:    _SourceHub_Subscribe_Handler,
+		},
+		{
+			MethodName: "SubscribeKey",
+			Handler:    _SourceHub_SubscribeKey_Handler,
+		},
+		{
+			MethodName: "Unsubscribe",
+			Handler:    _SourceHub_Unsubscribe_Handler,
+		},
+		{
+			MethodName: "UnsubscribeKey",
+			Handler:    _SourceHub_UnsubscribeKey_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Listen",
+			Handler:       _SourceHub_Listen_Handler,
+			ServerStreams: true,
+		},
 		{
 			StreamName:    "GetSources",
 			Handler:       _SourceHub_GetSources_Handler,
@@ -526,11 +1176,6 @@ var _SourceHub_serviceDesc = grpc.ServiceDesc{
 			Handler:       _SourceHub_GetKeys_Handler,
 			ServerStreams: true,
 		},
-		{
-			StreamName:    "Subscribe",
-			Handler:       _SourceHub_Subscribe_Handler,
-			ServerStreams: true,
-		},
 	},
 	Metadata: "sourcehub.proto",
 }
@@ -538,25 +1183,42 @@ var _SourceHub_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("sourcehub.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 319 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0x9c, 0x93, 0x41, 0x4b, 0xfb, 0x40,
-	0x10, 0xc5, 0xff, 0x69, 0xfe, 0x56, 0x33, 0x14, 0x93, 0x8e, 0x22, 0x25, 0x58, 0x5b, 0xd6, 0x4b,
-	0x04, 0x09, 0xa2, 0x47, 0x3d, 0x79, 0x89, 0xd8, 0x8b, 0x66, 0xc1, 0x83, 0x37, 0xb7, 0x0c, 0x28,
-	0x8a, 0x89, 0xd9, 0xac, 0xd0, 0x6f, 0xe2, 0xc7, 0x95, 0x24, 0x5b, 0xb3, 0x34, 0x6c, 0x95, 0xde,
-	0xb2, 0xb3, 0xf3, 0x7e, 0x6f, 0x77, 0xde, 0x06, 0x7c, 0x99, 0xa9, 0x62, 0x4e, 0xcf, 0x4a, 0xc4,
-	0x79, 0x91, 0x95, 0x19, 0x0e, 0x8c, 0x82, 0x60, 0x7b, 0x30, 0x4c, 0xa8, 0xe4, 0x75, 0x49, 0xa6,
-	0xf4, 0xa1, 0x48, 0x96, 0xec, 0x14, 0xd0, 0x2c, 0xca, 0x3c, 0x7b, 0x97, 0x84, 0x07, 0xd0, 0x6f,
-	0xa4, 0x23, 0x67, 0xea, 0x44, 0x5e, 0xaa, 0x57, 0xec, 0x12, 0xfc, 0x84, 0xca, 0x87, 0xa7, 0x37,
-	0x45, 0x1a, 0x60, 0x6b, 0xc5, 0x00, 0xdc, 0x57, 0x5a, 0x8c, 0x7a, 0x75, 0xb1, 0xfa, 0x64, 0x11,
-	0x04, 0xad, 0x58, 0x1b, 0xed, 0xc3, 0xd6, 0x67, 0x55, 0xa8, 0xc5, 0x83, 0xb4, 0x59, 0xb0, 0x7b,
-	0xf0, 0xf9, 0xa6, 0x36, 0x2d, 0xd2, 0x35, 0x91, 0x11, 0x04, 0xfc, 0x6f, 0xe6, 0x11, 0xec, 0x26,
-	0x54, 0xce, 0x68, 0x21, 0x7f, 0xf1, 0x66, 0xc7, 0xf5, 0x34, 0x9a, 0x4e, 0x8d, 0xd4, 0xc7, 0x71,
-	0xda, 0x5b, 0x5f, 0x41, 0xc0, 0x95, 0x90, 0xf3, 0xe2, 0x45, 0x6c, 0x30, 0xb3, 0x13, 0x18, 0x1a,
-	0xea, 0x75, 0xe7, 0x3e, 0xff, 0x72, 0xc1, 0x6b, 0x72, 0xbc, 0x51, 0x02, 0x39, 0x40, 0x9b, 0x2b,
-	0x4e, 0x62, 0xf3, 0x25, 0xc4, 0x9d, 0x67, 0x10, 0x4e, 0xed, 0x0d, 0x8d, 0x29, 0xfb, 0x77, 0xe6,
-	0xe0, 0x0c, 0x76, 0x96, 0x09, 0xe2, 0xb8, 0xa3, 0x30, 0xf3, 0x0a, 0x8f, 0x6c, 0xdb, 0x4b, 0x5c,
-	0x05, 0xe3, 0x16, 0x18, 0x5f, 0x0f, 0xe3, 0x5d, 0xd8, 0x2d, 0x6c, 0xeb, 0x28, 0xf0, 0xb0, 0xe3,
-	0x6c, 0x64, 0x19, 0x8e, 0x2d, 0xbb, 0xc6, 0x2d, 0xef, 0xc0, 0xfb, 0x99, 0x39, 0xae, 0x5a, 0xaf,
-	0x44, 0x19, 0x4e, 0xac, 0xfb, 0x2d, 0xf1, 0xfa, 0xff, 0x63, 0x2f, 0x17, 0xa2, 0x5f, 0xff, 0x94,
-	0x17, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x39, 0x40, 0xab, 0x5b, 0xa7, 0x03, 0x00, 0x00,
+	// 588 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x56, 0x5f, 0x6f, 0x12, 0x4f,
+	0x14, 0x65, 0xa1, 0x3f, 0x28, 0xe7, 0x87, 0x40, 0x2f, 0xd8, 0x90, 0xf5, 0x4f, 0x71, 0xea, 0x03,
+	0xa6, 0x96, 0x34, 0xfa, 0x01, 0x34, 0x68, 0x5c, 0x22, 0xc6, 0x07, 0x10, 0xb5, 0x1a, 0x1f, 0xba,
+	0x38, 0x89, 0xa4, 0xba, 0x8b, 0xcc, 0x6e, 0x13, 0xbe, 0xac, 0x9f, 0xc5, 0x94, 0x5d, 0x96, 0x99,
+	0x61, 0xff, 0x58, 0xca, 0x5b, 0x77, 0xe6, 0xcc, 0x99, 0x73, 0x4f, 0xe7, 0x9e, 0x0b, 0x6a, 0xc2,
+	0xf5, 0xe7, 0x13, 0xfe, 0xc3, 0xb7, 0xbb, 0xb3, 0xb9, 0xeb, 0xb9, 0x54, 0x91, 0x16, 0x6c, 0x56,
+	0x47, 0xf5, 0x95, 0xeb, 0x38, 0x7c, 0xe2, 0x0d, 0xf9, 0x6f, 0x9f, 0x0b, 0x8f, 0x9d, 0xa0, 0x16,
+	0xad, 0x88, 0x99, 0xeb, 0x08, 0x4e, 0x2d, 0x94, 0x04, 0x17, 0x62, 0xea, 0x3a, 0x2d, 0xa3, 0x6d,
+	0x74, 0xca, 0xc3, 0xd5, 0x27, 0x7b, 0x82, 0x3b, 0xef, 0xa6, 0xc2, 0xe3, 0x4e, 0x78, 0x3a, 0x05,
+	0xda, 0x47, 0x71, 0x3c, 0xfb, 0x7e, 0xe1, 0x71, 0x3a, 0x44, 0x31, 0xd0, 0x10, 0x42, 0xc2, 0x2f,
+	0xaa, 0xa3, 0x70, 0xc9, 0x17, 0xad, 0xfc, 0x72, 0xf1, 0xfa, 0x4f, 0x6a, 0xe2, 0xbf, 0xab, 0x8b,
+	0x9f, 0x3e, 0x6f, 0x15, 0xda, 0x46, 0xa7, 0x32, 0x0c, 0x3e, 0xd8, 0x29, 0x0e, 0x2c, 0xee, 0x8d,
+	0x96, 0x87, 0x44, 0xf6, 0xc5, 0x4f, 0x41, 0x32, 0x3c, 0xac, 0x29, 0x41, 0x04, 0x1b, 0xa3, 0x66,
+	0x71, 0xef, 0xe3, 0xf5, 0x45, 0x99, 0xd4, 0x12, 0x49, 0x3e, 0xae, 0x92, 0x42, 0x54, 0x09, 0xeb,
+	0xa0, 0xbe, 0xa6, 0x0d, 0x25, 0x44, 0xd5, 0x19, 0x72, 0x75, 0x97, 0xa8, 0x8d, 0x76, 0x2f, 0x60,
+	0x7d, 0xd9, 0x9e, 0x7c, 0x59, 0x07, 0xf5, 0xd1, 0xbf, 0xc9, 0xfa, 0x0c, 0x1a, 0xf2, 0x5f, 0xee,
+	0x15, 0xdf, 0xb9, 0x35, 0xe7, 0x68, 0x28, 0xcc, 0x59, 0x8f, 0xee, 0x06, 0xd4, 0xd6, 0x8a, 0x3a,
+	0xf8, 0xef, 0x6f, 0xad, 0x9a, 0xf5, 0xd1, 0x54, 0x89, 0xb6, 0x15, 0xc9, 0x7a, 0xa8, 0x5a, 0xdc,
+	0x1b, 0xf0, 0x85, 0xd8, 0x5e, 0xcd, 0xf1, 0xf2, 0x8d, 0x06, 0x1c, 0xa1, 0x90, 0xb0, 0x76, 0x63,
+	0x5d, 0xfb, 0x6b, 0xd4, 0x47, 0xbe, 0x2d, 0x26, 0xf3, 0xa9, 0x7d, 0x8b, 0xc2, 0x4f, 0x70, 0x20,
+	0xb1, 0x64, 0xf4, 0xce, 0x39, 0x1a, 0x11, 0x78, 0xc0, 0x17, 0xbb, 0x7c, 0x24, 0x2f, 0xd1, 0x54,
+	0xa9, 0xd3, 0xa5, 0x6c, 0x66, 0x09, 0x7b, 0x03, 0x1a, 0x3b, 0xe2, 0xf6, 0x8e, 0x9c, 0xa2, 0xa1,
+	0xf0, 0x64, 0x78, 0xf2, 0x15, 0x77, 0x25, 0xf8, 0x8e, 0x5d, 0xe9, 0xe1, 0x50, 0x27, 0xbf, 0xa9,
+	0x2f, 0xcf, 0xfe, 0x94, 0x50, 0x0e, 0x5e, 0x75, 0xdf, 0xb7, 0xa9, 0x8f, 0x52, 0x98, 0xfe, 0x74,
+	0xbf, 0x2b, 0x4f, 0x8a, 0xae, 0x3a, 0x26, 0xcc, 0x07, 0x09, 0xbb, 0xc1, 0xfd, 0x2c, 0x47, 0x2f,
+	0x50, 0x0c, 0x46, 0x03, 0xdd, 0x53, 0xa1, 0xca, 0xc0, 0x30, 0x9b, 0xea, 0x66, 0x30, 0x22, 0x58,
+	0xee, 0xcc, 0xa0, 0x11, 0xb0, 0xce, 0x6d, 0x3a, 0x52, 0x71, 0x1b, 0x03, 0xc0, 0x6c, 0x27, 0x03,
+	0x56, 0x9a, 0xce, 0x0c, 0x7a, 0x8b, 0x52, 0xd8, 0x3a, 0x7a, 0x7d, 0x6a, 0x57, 0xea, 0xf5, 0x69,
+	0xfd, 0xb6, 0xe4, 0x1a, 0x60, 0x7f, 0x15, 0x9e, 0xa4, 0xc1, 0xb5, 0x04, 0x37, 0x1f, 0x26, 0x6d,
+	0x47, 0x76, 0x0d, 0xb0, 0x6f, 0x25, 0x90, 0x59, 0xe9, 0x64, 0xd6, 0x26, 0xd9, 0x07, 0xfc, 0x2f,
+	0x45, 0x2a, 0x69, 0xd6, 0x6c, 0xe6, 0xb8, 0xf9, 0x28, 0x05, 0x11, 0xb1, 0x7e, 0x42, 0x45, 0x0e,
+	0x41, 0x8a, 0x3d, 0xa4, 0x24, 0xad, 0xc9, 0xd2, 0x20, 0x11, 0xf1, 0x7b, 0x94, 0xa3, 0xe6, 0x26,
+	0xdd, 0x2a, 0xad, 0x63, 0xcd, 0xa3, 0xc4, 0x7d, 0x59, 0xa8, 0x1c, 0x16, 0xba, 0xd0, 0x98, 0x8c,
+	0xd2, 0x85, 0xc6, 0x65, 0x4d, 0xe0, 0xab, 0xd4, 0x6f, 0xba, 0xaf, 0x9b, 0xf1, 0xa2, 0xfb, 0x1a,
+	0x13, 0x1c, 0x2c, 0x47, 0xdf, 0x50, 0x55, 0xbb, 0x98, 0x8e, 0x13, 0x8f, 0x49, 0x92, 0x1f, 0xa7,
+	0x83, 0x56, 0xf4, 0xbd, 0xbd, 0x2f, 0xf9, 0x99, 0x6d, 0x17, 0x97, 0xbf, 0xfe, 0x9e, 0xff, 0x0d,
+	0x00, 0x00, 0xff, 0xff, 0x97, 0x8c, 0x56, 0xf7, 0x10, 0x0a, 0x00, 0x00,
 }

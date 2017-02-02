@@ -83,3 +83,23 @@ func (m *MapSource) GetKeys() ([]string, error) {
 	}
 	return keys, nil
 }
+
+//Remove removes the pair associated with the specified key
+func (m *MapSource) Remove(key string) error {
+	mutex := m.getStorageMutex()
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	delete(m.storage, key)
+	return nil
+}
+
+//RemoveKeyValuePair removes the specified pair from the source
+func (m *MapSource) RemoveKeyValuePair(kvp sourcehub.KeyValuePair) error {
+	mutex := m.getStorageMutex()
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	delete(m.storage, kvp.Key)
+	return nil
+}
