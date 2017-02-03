@@ -87,12 +87,6 @@ func ExampleMapSource_GetKeys() {
 		fmt.Println("Error getting keys for source.")
 	}
 
-	for index, key := range keys {
-		if index == len(keys)-1 {
-			fmt.Printf("%s\n", key)
-		} else {
-			fmt.Printf("%s ", key)
-		}
-	}
-	//Output:color time size
+	fmt.Println(len(keys))
+	//Output:3
 }
