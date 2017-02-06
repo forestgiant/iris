@@ -26,6 +26,7 @@ type Session struct {
 
 // Server implements the generated pb.IrisServer interface
 type Server struct {
+	initialized     bool                             //indicates whether Init has been called
 	SourceFactory   SourceFactory                    //factory method for creating sources
 	sources         map[string]iris.Source           //collection of sources accessed by identifier
 	sourcesMutex    *sync.Mutex                      //used when managing our collection of sources
@@ -37,8 +38,23 @@ type Server struct {
 	keySubsMutex    *sync.Mutex                      //used to lock the key subscriptions collection
 }
 
+//initialize the server's caching/state mechanisms
+func (s *Server) initialize() {
+	if s.initialized {
+		return
+	}
+
+	s.initialized = true
+	s.sourcesMutex = &sync.Mutex{}
+	s.sessionsMutex = &sync.Mutex{}
+	s.sourceSubsMutex = &sync.Mutex{}
+	s.keySubsMutex = &sync.Mutex{}
+}
+
 // Connect responds with a stream of objects representing source, key, value updates
 func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
+	s.initialize()
+
 	session, err := s.generateSessionID(10)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to generate session identifier. %s", err)
@@ -55,6 +71,8 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 
 // Listen responds with a stream of objects representing source, key, value updates
 func (s *Server) Listen(req *pb.ListenRequest, stream pb.Iris_ListenServer) error {
+	s.initialize()
+
 	if _, err := s.addSession(req.Session, stream); err != nil {
 		return err
 	}
@@ -66,6 +84,8 @@ func (s *Server) Listen(req *pb.ListenRequest, stream pb.Iris_ListenServer) erro
 
 // GetSources responds with a stream of objects representing available sources
 func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.Iris_GetSourcesServer) error {
+	s.initialize()
+
 	s.sourcesMutex.Lock()
 	defer s.sourcesMutex.Unlock()
 
@@ -79,6 +99,8 @@ func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.Iris_GetSources
 
 // GetKeys responds with a stream of objects representing available sources
 func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) error {
+	s.initialize()
+
 	source := s.getSourceWithIdentifier(req.Source)
 	keys, err := source.GetKeys()
 	if err != nil {
@@ -95,6 +117,8 @@ func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) e
 
 // SetValue sets the value for the specified source and key
 func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetValueResponse, error) {
+	s.initialize()
+
 	source := s.getSourceWithIdentifier(req.Source)
 	if source == nil {
 		return nil, errors.New("Source could not be found")
@@ -114,6 +138,8 @@ func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetVa
 
 // GetValue expects a source and key and responds with the associated value
 func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
+	s.initialize()
+
 	source := s.getSourceWithIdentifier(req.Source)
 	if source == nil {
 		return nil, errors.New("Source could not be found")
@@ -131,16 +157,14 @@ func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetVa
 
 // RemoveValue removes the specified value from the provided source
 func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*pb.RemoveValueResponse, error) {
+	s.initialize()
+
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")
 	}
 
 	if len(req.Key) == 0 {
 		return nil, errors.New("You must provide the key of the value you would like to be removed")
-	}
-
-	if s.sourcesMutex == nil {
-		s.sourcesMutex = &sync.Mutex{}
 	}
 
 	s.sourcesMutex.Lock()
@@ -161,12 +185,10 @@ func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*
 
 // RemoveSource removes the specified source and all of its contents
 func (s *Server) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest) (*pb.RemoveSourceResponse, error) {
+	s.initialize()
+
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")
-	}
-
-	if s.sourcesMutex == nil {
-		s.sourcesMutex = &sync.Mutex{}
 	}
 
 	s.sourcesMutex.Lock()
@@ -181,16 +203,14 @@ func (s *Server) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest) 
 
 // Subscribe indicates that the client wishes to be notified of all updates for the specified source
 func (s *Server) Subscribe(ctx context.Context, req *pb.SubscribeRequest) (*pb.SubscribeResponse, error) {
+	s.initialize()
+
 	if len(req.Session) == 0 {
 		return nil, errors.New("Subscribe requires that you provide a valid session")
 	}
 
 	if len(req.Source) == 0 {
 		return nil, errors.New("Subscribe requires that you provide a source")
-	}
-
-	if s.sourceSubsMutex == nil {
-		s.sourceSubsMutex = &sync.Mutex{}
 	}
 
 	s.sourceSubsMutex.Lock()
@@ -212,6 +232,8 @@ func (s *Server) Subscribe(ctx context.Context, req *pb.SubscribeRequest) (*pb.S
 // SubscribeKey indicates that the client wishes to be notified of updates associated with
 // a specific key from the specified source
 func (s *Server) SubscribeKey(ctx context.Context, req *pb.SubscribeKeyRequest) (*pb.SubscribeKeyResponse, error) {
+	s.initialize()
+
 	if len(req.Session) == 0 {
 		return nil, errors.New("SubscribeKey requires that you provide a valid session")
 	}
@@ -222,10 +244,6 @@ func (s *Server) SubscribeKey(ctx context.Context, req *pb.SubscribeKeyRequest) 
 
 	if len(req.Key) == 0 {
 		return nil, errors.New("SubscribeKey requires that you provide a key")
-	}
-
-	if s.keySubsMutex == nil {
-		s.keySubsMutex = &sync.Mutex{}
 	}
 
 	s.keySubsMutex.Lock()
@@ -250,16 +268,14 @@ func (s *Server) SubscribeKey(ctx context.Context, req *pb.SubscribeKeyRequest) 
 
 // Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
 func (s *Server) Unsubscribe(ctx context.Context, req *pb.UnsubscribeRequest) (*pb.UnsubscribeResponse, error) {
+	s.initialize()
+
 	if len(req.Session) == 0 {
 		return nil, errors.New("Unsubscribe requires that you provide a session")
 	}
 
 	if len(req.Source) == 0 {
 		return nil, errors.New("Unsubscribe requires that you provide a source")
-	}
-
-	if s.sourceSubsMutex == nil {
-		s.sourceSubsMutex = &sync.Mutex{}
 	}
 
 	s.sourceSubsMutex.Lock()
@@ -280,6 +296,8 @@ func (s *Server) Unsubscribe(ctx context.Context, req *pb.UnsubscribeRequest) (*
 // UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
 // with a specific key from the specified source
 func (s *Server) UnsubscribeKey(ctx context.Context, req *pb.UnsubscribeKeyRequest) (*pb.UnsubscribeKeyResponse, error) {
+	s.initialize()
+
 	if len(req.Session) == 0 {
 		return nil, errors.New("UnsubscribeKey requires that you provide a valid session")
 	}
@@ -290,10 +308,6 @@ func (s *Server) UnsubscribeKey(ctx context.Context, req *pb.UnsubscribeKeyReque
 
 	if len(req.Key) == 0 {
 		return nil, errors.New("UnsubscribeKey requires that you provide a key")
-	}
-
-	if s.keySubsMutex == nil {
-		s.keySubsMutex = &sync.Mutex{}
 	}
 
 	s.keySubsMutex.Lock()
@@ -313,6 +327,8 @@ func (s *Server) UnsubscribeKey(ctx context.Context, req *pb.UnsubscribeKeyReque
 
 // Sends the provided value to any streams subscribed to the specified source and key
 func (s *Server) publish(source string, key string, value []byte) error {
+	s.initialize()
+
 	var update = &pb.Update{
 		Source: source,
 		Key:    key,
@@ -334,10 +350,6 @@ func (s *Server) publish(source string, key string, value []byte) error {
 
 	var returnErrors []error
 
-	if s.sourceSubsMutex == nil {
-		s.sourceSubsMutex = &sync.Mutex{}
-	}
-
 	s.sourceSubsMutex.Lock()
 	if s.sourceSubs != nil && s.sourceSubs[source] != nil {
 		for identifier := range s.sourceSubs[source] {
@@ -347,10 +359,6 @@ func (s *Server) publish(source string, key string, value []byte) error {
 		}
 	}
 	s.sourceSubsMutex.Unlock()
-
-	if s.keySubsMutex == nil {
-		s.keySubsMutex = &sync.Mutex{}
-	}
 
 	s.keySubsMutex.Lock()
 	if s.keySubs != nil && s.keySubs[source] != nil && s.keySubs[source][key] != nil {
@@ -371,16 +379,14 @@ func (s *Server) publish(source string, key string, value []byte) error {
 
 // generateSessionID produces a unique session identifier for this server
 func (s *Server) generateSessionID(length int) (string, error) {
+	s.initialize()
+
 	b := make([]byte, length)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 
 	session := fmt.Sprintf("%X", b)
-
-	if s.sessionsMutex == nil {
-		s.sessionsMutex = &sync.Mutex{}
-	}
 
 	s.sessionsMutex.Lock()
 	defer s.sessionsMutex.Unlock()
@@ -398,9 +404,7 @@ func (s *Server) generateSessionID(length int) (string, error) {
 
 // addSession adds the session to the server's collection
 func (s *Server) addSession(sessionIdentifier string, listener pb.Iris_ListenServer) (*Session, error) {
-	if s.sessionsMutex == nil {
-		s.sessionsMutex = &sync.Mutex{}
-	}
+	s.initialize()
 
 	s.sessionsMutex.Lock()
 	defer s.sessionsMutex.Unlock()
@@ -417,9 +421,7 @@ func (s *Server) addSession(sessionIdentifier string, listener pb.Iris_ListenSer
 
 // removeSession removes the session from the server's collection
 func (s *Server) removeSession(sessionIdentifier string) error {
-	if s.sourceSubsMutex == nil {
-		s.sourceSubsMutex = &sync.Mutex{}
-	}
+	s.initialize()
 
 	s.sourceSubsMutex.Lock()
 	if s.sourceSubs != nil {
@@ -427,19 +429,11 @@ func (s *Server) removeSession(sessionIdentifier string) error {
 	}
 	s.sourceSubsMutex.Unlock()
 
-	if s.keySubsMutex == nil {
-		s.keySubsMutex = &sync.Mutex{}
-	}
-
 	s.keySubsMutex.Lock()
 	if s.keySubs != nil {
 		delete(s.keySubs, sessionIdentifier)
 	}
 	s.keySubsMutex.Unlock()
-
-	if s.sessionsMutex == nil {
-		s.sessionsMutex = &sync.Mutex{}
-	}
 
 	s.sessionsMutex.Lock()
 	if s.sessions != nil {
@@ -453,9 +447,7 @@ func (s *Server) removeSession(sessionIdentifier string) error {
 
 // getSourceWithIdentifier returns the source with the provided identifier, or the existing one if already created
 func (s *Server) getSourceWithIdentifier(identifier string) iris.Source {
-	if s.sourcesMutex == nil {
-		s.sourcesMutex = &sync.Mutex{}
-	}
+	s.initialize()
 
 	s.sourcesMutex.Lock()
 	defer s.sourcesMutex.Unlock()

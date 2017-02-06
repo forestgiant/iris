@@ -17,6 +17,7 @@ type UpdateHandler func(update *pb.Update) error
 
 // Client for communicating with an Iris server
 type Client struct {
+	initialized  bool
 	conn         *grpc.ClientConn
 	rpc          pb.IrisClient
 	listenStream pb.Iris_ListenClient
@@ -84,22 +85,26 @@ func NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride 
 	return NewClient(ctx, serverAddress, opts)
 }
 
+func (c *Client) initialize() {
+	if c.initialized {
+		return
+	}
+
+	c.initialized = true
+	c.sourceHandlersMutex = &sync.Mutex{}
+	c.keyHandlersMutex = &sync.Mutex{}
+}
+
 // Close tears down the client's underlying connections
 func (c *Client) Close() error {
-	c.session = ""
+	c.initialize()
 
-	if c.sourceHandlersMutex == nil {
-		c.sourceHandlersMutex = &sync.Mutex{}
-	}
+	c.session = ""
 
 	c.sourceHandlersMutex.Lock()
 	defer c.sourceHandlersMutex.Unlock()
 
 	c.sourceHandlers = nil
-
-	if c.keyHandlersMutex == nil {
-		c.keyHandlersMutex = &sync.Mutex{}
-	}
 
 	c.keyHandlersMutex.Lock()
 	defer c.keyHandlersMutex.Unlock()
@@ -111,6 +116,8 @@ func (c *Client) Close() error {
 
 // Listen responds with a stream of objects representing source, key, value updates
 func (c *Client) listen(ctx context.Context) error {
+	c.initialize()
+
 	req := &pb.ListenRequest{
 		Session: c.session,
 	}
@@ -152,6 +159,8 @@ func (c *Client) listen(ctx context.Context) error {
 
 // GetSources responds with an array of strings representing sources
 func (c *Client) GetSources(ctx context.Context) ([]string, error) {
+	c.initialize()
+
 	stream, err := c.rpc.GetSources(ctx, &pb.GetSourcesRequest{
 		Session: c.session,
 	})
@@ -178,6 +187,8 @@ func (c *Client) GetSources(ctx context.Context) ([]string, error) {
 
 // GetKeys expects a source and responds with an array of strings representing the available keys
 func (c *Client) GetKeys(ctx context.Context, source string) ([]string, error) {
+	c.initialize()
+
 	stream, err := c.rpc.GetKeys(ctx, &pb.GetKeysRequest{
 		Session: c.session,
 		Source:  source,
@@ -205,6 +216,8 @@ func (c *Client) GetKeys(ctx context.Context, source string) ([]string, error) {
 
 // SetValue sets the value for the specified source and key
 func (c *Client) SetValue(ctx context.Context, source string, key string, value []byte) error {
+	c.initialize()
+
 	_, err := c.rpc.SetValue(ctx, &pb.SetValueRequest{
 		Session: c.session,
 		Source:  source,
@@ -216,6 +229,8 @@ func (c *Client) SetValue(ctx context.Context, source string, key string, value 
 
 // GetValue expects a source and key and responds with the associated value
 func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byte, error) {
+	c.initialize()
+
 	resp, err := c.rpc.GetValue(ctx, &pb.GetValueRequest{
 		Session: c.session,
 		Source:  source,
@@ -226,6 +241,8 @@ func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byt
 
 // RemoveValue expects a source and key and removes that entry from the source
 func (c *Client) RemoveValue(ctx context.Context, source string, key string) error {
+	c.initialize()
+
 	_, err := c.rpc.RemoveValue(ctx, &pb.RemoveValueRequest{
 		Session: c.session,
 		Source:  source,
@@ -236,6 +253,8 @@ func (c *Client) RemoveValue(ctx context.Context, source string, key string) err
 
 // RemoveSource removes the specified source and all its values from the server
 func (c *Client) RemoveSource(ctx context.Context, source string) error {
+	c.initialize()
+
 	_, err := c.rpc.RemoveSource(ctx, &pb.RemoveSourceRequest{
 		Session: c.session,
 		Source:  source,
@@ -245,9 +264,7 @@ func (c *Client) RemoveSource(ctx context.Context, source string) error {
 
 // Subscribe indicates that the client wishes to be notified of all updates for the specified source
 func (c *Client) Subscribe(ctx context.Context, source string, handler *UpdateHandler) (*pb.SubscribeResponse, error) {
-	if c.sourceHandlersMutex == nil {
-		c.sourceHandlersMutex = &sync.Mutex{}
-	}
+	c.initialize()
 
 	c.sourceHandlersMutex.Lock()
 	defer c.sourceHandlersMutex.Unlock()
@@ -270,9 +287,7 @@ func (c *Client) Subscribe(ctx context.Context, source string, handler *UpdateHa
 // SubscribeKey indicates that the client wishes to be notified of updates associated with
 // a specific key from the specified source
 func (c *Client) SubscribeKey(ctx context.Context, source string, key string, handler *UpdateHandler) (*pb.SubscribeKeyResponse, error) {
-	if c.keyHandlersMutex == nil {
-		c.keyHandlersMutex = &sync.Mutex{}
-	}
+	c.initialize()
 
 	c.keyHandlersMutex.Lock()
 	defer c.keyHandlersMutex.Unlock()
@@ -296,9 +311,7 @@ func (c *Client) SubscribeKey(ctx context.Context, source string, key string, ha
 
 // Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
 func (c *Client) Unsubscribe(ctx context.Context, source string, handler *UpdateHandler) (*pb.UnsubscribeResponse, error) {
-	if c.sourceHandlersMutex == nil {
-		c.sourceHandlersMutex = &sync.Mutex{}
-	}
+	c.initialize()
 
 	c.sourceHandlersMutex.Lock()
 	defer c.sourceHandlersMutex.Unlock()
@@ -316,9 +329,7 @@ func (c *Client) Unsubscribe(ctx context.Context, source string, handler *Update
 // UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
 // with a specific key from the specified source
 func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, handler *UpdateHandler) (*pb.UnsubscribeKeyResponse, error) {
-	if c.keyHandlersMutex == nil {
-		c.keyHandlersMutex = &sync.Mutex{}
-	}
+	c.initialize()
 
 	c.keyHandlersMutex.Lock()
 	defer c.keyHandlersMutex.Unlock()

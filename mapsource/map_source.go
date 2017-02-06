@@ -8,8 +8,10 @@ import (
 
 //MapSource is an implementation of the Source interface built golang's map type
 type MapSource struct {
-	id           string
-	storage      map[string][]byte
+	id      string
+	storage map[string][]byte
+
+	initialized  bool
 	storageMutex *sync.Mutex
 }
 
@@ -18,11 +20,13 @@ func NewMapSource(identifier string) *MapSource {
 	return &MapSource{id: identifier}
 }
 
-func (m *MapSource) getStorageMutex() *sync.Mutex {
-	if m.storageMutex == nil {
-		m.storageMutex = &sync.Mutex{}
+func (m *MapSource) initialize() {
+	if m.initialized {
+		return
 	}
-	return m.storageMutex
+
+	m.initialized = true
+	m.storageMutex = &sync.Mutex{}
 }
 
 //ID returns the identifier for this source
@@ -35,9 +39,10 @@ func (m *MapSource) ID() string {
 
 //Set stores the value
 func (m *MapSource) Set(key string, value []byte) error {
-	mutex := m.getStorageMutex()
-	mutex.Lock()
-	defer mutex.Unlock()
+	m.initialize()
+
+	m.storageMutex.Lock()
+	defer m.storageMutex.Unlock()
 
 	if m.storage == nil {
 		m.storage = make(map[string][]byte)
@@ -48,15 +53,15 @@ func (m *MapSource) Set(key string, value []byte) error {
 
 //SetKeyValuePair is a helper for Set that accepts a KeyValuePair object
 func (m *MapSource) SetKeyValuePair(kvp iris.KeyValuePair) error {
-	m.Set(kvp.Key, kvp.Value)
-	return nil
+	return m.Set(kvp.Key, kvp.Value)
 }
 
 //Get retrieves the stored value
 func (m *MapSource) Get(key string) (value []byte, err error) {
-	mutex := m.getStorageMutex()
-	mutex.Lock()
-	defer mutex.Unlock()
+	m.initialize()
+
+	m.storageMutex.Lock()
+	defer m.storageMutex.Unlock()
 
 	value = m.storage[key]
 	return value, nil
@@ -73,9 +78,10 @@ func (m *MapSource) GetKeyValuePair(key string) (iris.KeyValuePair, error) {
 
 //GetKeys returns a slice of keys present in storage
 func (m *MapSource) GetKeys() ([]string, error) {
-	mutex := m.getStorageMutex()
-	mutex.Lock()
-	defer mutex.Unlock()
+	m.initialize()
+
+	m.storageMutex.Lock()
+	defer m.storageMutex.Unlock()
 
 	keys := make([]string, 0, len(m.storage))
 	for k := range m.storage {
@@ -86,9 +92,10 @@ func (m *MapSource) GetKeys() ([]string, error) {
 
 //Remove removes the pair associated with the specified key
 func (m *MapSource) Remove(key string) error {
-	mutex := m.getStorageMutex()
-	mutex.Lock()
-	defer mutex.Unlock()
+	m.initialize()
+
+	m.storageMutex.Lock()
+	defer m.storageMutex.Unlock()
 
 	delete(m.storage, key)
 	return nil
@@ -96,10 +103,5 @@ func (m *MapSource) Remove(key string) error {
 
 //RemoveKeyValuePair removes the specified pair from the source
 func (m *MapSource) RemoveKeyValuePair(kvp iris.KeyValuePair) error {
-	mutex := m.getStorageMutex()
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	delete(m.storage, kvp.Key)
-	return nil
+	return m.Remove(kvp.Key)
 }
