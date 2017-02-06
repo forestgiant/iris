@@ -1,4 +1,4 @@
-package sourcehub
+package iris
 
 import (
 	"encoding/json"

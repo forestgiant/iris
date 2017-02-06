@@ -13,16 +13,16 @@ import (
 	"github.com/forestgiant/portutil"
 	"google.golang.org/grpc"
 
-	"gitlab.fg/otis/sourcehub"
-	"gitlab.fg/otis/sourcehub/pb"
-	"gitlab.fg/otis/sourcehub/transport"
+	"gitlab.fg/otis/iris"
+	"gitlab.fg/otis/iris/pb"
+	"gitlab.fg/otis/iris/transport"
 )
 
 var testClient *Client
 var testServiceAddress string
 
-const testColorsSource = "com.forestgiant.sourcehub.testing.colors"
-const testSoundsSource = "com.forestgiant.sourcehub.testing.sounds"
+const testColorsSource = "com.forestgiant.iris.testing.colors"
+const testSoundsSource = "com.forestgiant.iris.testing.sounds"
 
 func TestMain(m *testing.M) {
 	port, err := portutil.GetUniqueTCP()
@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterSourceHubServer(grpcServer, &transport.Server{})
+	pb.RegisterIrisServer(grpcServer, &transport.Server{})
 	errchan := make(chan error)
 	go func() {
 		errchan <- grpcServer.Serve(l)
@@ -332,7 +332,7 @@ func TestRemoveHandler(t *testing.T) {
 func TestRemoveSource(t *testing.T) {
 	deleteTestSources()
 
-	test := sourcehub.KeyValuePair{Key: "primary", Value: []byte("red")}
+	test := iris.KeyValuePair{Key: "primary", Value: []byte("red")}
 	setContext, cancelSet := context.WithCancel(context.Background())
 	defer cancelSet()
 	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {
@@ -360,7 +360,7 @@ func TestRemoveSource(t *testing.T) {
 func TestRemoveValue(t *testing.T) {
 	deleteTestSources()
 
-	test := sourcehub.KeyValuePair{Key: "primary", Value: []byte("red")}
+	test := iris.KeyValuePair{Key: "primary", Value: []byte("red")}
 	setContext, cancelSet := context.WithCancel(context.Background())
 	defer cancelSet()
 	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {

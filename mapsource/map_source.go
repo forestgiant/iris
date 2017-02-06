@@ -3,7 +3,7 @@ package mapsource
 import (
 	"sync"
 
-	"gitlab.fg/otis/sourcehub"
+	"gitlab.fg/otis/iris"
 )
 
 //MapSource is an implementation of the Source interface built golang's map type
@@ -28,7 +28,7 @@ func (m *MapSource) getStorageMutex() *sync.Mutex {
 //ID returns the identifier for this source
 func (m *MapSource) ID() string {
 	if len(m.id) == 0 {
-		return sourcehub.DefaultIdentifier
+		return iris.DefaultIdentifier
 	}
 	return m.id
 }
@@ -47,7 +47,7 @@ func (m *MapSource) Set(key string, value []byte) error {
 }
 
 //SetKeyValuePair is a helper for Set that accepts a KeyValuePair object
-func (m *MapSource) SetKeyValuePair(kvp sourcehub.KeyValuePair) error {
+func (m *MapSource) SetKeyValuePair(kvp iris.KeyValuePair) error {
 	m.Set(kvp.Key, kvp.Value)
 	return nil
 }
@@ -63,8 +63,8 @@ func (m *MapSource) Get(key string) (value []byte, err error) {
 }
 
 //GetKeyValuePair retrives the stored value as a KeyValuePair
-func (m *MapSource) GetKeyValuePair(key string) (sourcehub.KeyValuePair, error) {
-	var kvp = sourcehub.KeyValuePair{
+func (m *MapSource) GetKeyValuePair(key string) (iris.KeyValuePair, error) {
+	var kvp = iris.KeyValuePair{
 		Key:   key,
 		Value: m.storage[key],
 	}
@@ -95,7 +95,7 @@ func (m *MapSource) Remove(key string) error {
 }
 
 //RemoveKeyValuePair removes the specified pair from the source
-func (m *MapSource) RemoveKeyValuePair(kvp sourcehub.KeyValuePair) error {
+func (m *MapSource) RemoveKeyValuePair(kvp iris.KeyValuePair) error {
 	mutex := m.getStorageMutex()
 	mutex.Lock()
 	defer mutex.Unlock()

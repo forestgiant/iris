@@ -3,7 +3,7 @@ package mapsource
 import (
 	"fmt"
 
-	sourcehub "gitlab.fg/otis/sourcehub"
+	iris "gitlab.fg/otis/iris"
 )
 
 func ExampleNewMapSource() {
@@ -40,7 +40,7 @@ func ExampleMapSource_Set() {
 
 func ExampleMapSource_SetKeyValuePair() {
 	source := NewMapSource("sourceIdentifier")
-	pair := sourcehub.KeyValuePair{Key: "key", Value: []byte("value")}
+	pair := iris.KeyValuePair{Key: "key", Value: []byte("value")}
 	source.SetKeyValuePair(pair)
 	retrieved, err := source.GetKeyValuePair(pair.Key)
 	if err != nil {
@@ -66,7 +66,7 @@ func ExampleMapSource_Get() {
 
 func ExampleMapSource_GetKeyValuePair() {
 	source := NewMapSource("sourceIdentifier")
-	pair := sourcehub.KeyValuePair{Key: "key", Value: []byte("value")}
+	pair := iris.KeyValuePair{Key: "key", Value: []byte("value")}
 	source.SetKeyValuePair(pair)
 	retrieved, err := source.GetKeyValuePair(pair.Key)
 	if err != nil {

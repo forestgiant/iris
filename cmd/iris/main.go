@@ -17,9 +17,9 @@ import (
 	"github.com/forestgiant/portutil"
 	"github.com/forestgiant/semver"
 	"gitlab.fg/go/stela"
-	"gitlab.fg/otis/sourcehub"
-	"gitlab.fg/otis/sourcehub/pb"
-	"gitlab.fg/otis/sourcehub/transport"
+	"gitlab.fg/otis/iris"
+	"gitlab.fg/otis/iris/pb"
+	"gitlab.fg/otis/iris/transport"
 
 	fglog "github.com/forestgiant/log"
 	stela_api "gitlab.fg/go/stela/api"
@@ -31,7 +31,7 @@ const (
 )
 
 func main() {
-	var logger = fglog.Logger{}.With("time", fglog.DefaultTimestamp, "caller", fglog.DefaultCaller, "service", "source-hub")
+	var logger = fglog.Logger{}.With("time", fglog.DefaultTimestamp, "caller", fglog.DefaultCaller, "service", "iris")
 
 	// Set up semantic versioning
 	err := semver.SetVersion(version)
@@ -90,7 +90,7 @@ func main() {
 	// Register service with Stela api
 	var client *stela_api.Client
 	service := &stela.Service{
-		Name: sourcehub.DefaultServiceName,
+		Name: iris.DefaultServiceName,
 		Port: int32(port),
 	}
 	if !*noStelaPtr {
@@ -145,9 +145,9 @@ func main() {
 			opts = append(opts, grpc.Creds(creds))
 		}
 
-		logger.Info("Starting sourcehub server", "port", service.Port, "stela", !*noStelaPtr, "secured", !*insecurePtr)
+		logger.Info("Starting iris", "port", service.Port, "stela", !*noStelaPtr, "secured", !*insecurePtr)
 		grpcServer := grpc.NewServer(opts...)
-		pb.RegisterSourceHubServer(grpcServer, &transport.Server{})
+		pb.RegisterIrisServer(grpcServer, &transport.Server{})
 		errchan <- grpcServer.Serve(l)
 	}()
 

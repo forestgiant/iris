@@ -3,12 +3,12 @@ package mapsource
 import (
 	"testing"
 
-	"gitlab.fg/otis/sourcehub"
+	"gitlab.fg/otis/iris"
 )
 
 func TestMapSource_GetID(t *testing.T) {
 	var m = NewMapSource("")
-	if m.ID() != sourcehub.DefaultIdentifier {
+	if m.ID() != iris.DefaultIdentifier {
 		t.Errorf("GetID should return the default identifier for a source with no ID provided.")
 	}
 
@@ -41,13 +41,13 @@ func TestMapSource_SetGet(t *testing.T) {
 
 func TestMapSource_SetGetKeyValuePair(t *testing.T) {
 	var m = new(MapSource)
-	var kvp = sourcehub.KeyValuePair{Key: "TestKey", Value: []byte("TestValue")}
+	var kvp = iris.KeyValuePair{Key: "TestKey", Value: []byte("TestValue")}
 	var err = m.SetKeyValuePair(kvp)
 	if err != nil {
 		t.Error(err)
 	}
 
-	var retreived sourcehub.KeyValuePair
+	var retreived iris.KeyValuePair
 	retreived, err = m.GetKeyValuePair(kvp.Key)
 	if err != nil {
 		t.Error(err)
@@ -128,12 +128,12 @@ func TestRemove(t *testing.T) {
 
 func TestRemoveKeyValuePair(t *testing.T) {
 	var m = new(MapSource)
-	var kvps = []sourcehub.KeyValuePair{
-		sourcehub.KeyValuePair{Key: "one", Value: []byte("value")},
-		sourcehub.KeyValuePair{Key: "two", Value: []byte("value")},
-		sourcehub.KeyValuePair{Key: "three", Value: []byte("value")},
-		sourcehub.KeyValuePair{Key: "four", Value: []byte("value")},
-		sourcehub.KeyValuePair{Key: "five", Value: []byte("value")},
+	var kvps = []iris.KeyValuePair{
+		iris.KeyValuePair{Key: "one", Value: []byte("value")},
+		iris.KeyValuePair{Key: "two", Value: []byte("value")},
+		iris.KeyValuePair{Key: "three", Value: []byte("value")},
+		iris.KeyValuePair{Key: "four", Value: []byte("value")},
+		iris.KeyValuePair{Key: "five", Value: []byte("value")},
 	}
 
 	for _, kvp := range kvps {

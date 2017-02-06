@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.fg/otis/sourcehub"
-	"gitlab.fg/otis/sourcehub/mapsource"
-	"gitlab.fg/otis/sourcehub/pb"
+	"gitlab.fg/otis/iris"
+	"gitlab.fg/otis/iris/mapsource"
+	"gitlab.fg/otis/iris/pb"
 	"golang.org/x/net/context"
 )
 
 // SourceFactory describes a method that returns a new source with the provided identifier
-type SourceFactory func(identifier string) sourcehub.Source
+type SourceFactory func(identifier string) iris.Source
 
 // SessionMap is a map used to efficiently store and search for sessions
 type SessionMap map[string]struct{}
@@ -21,13 +21,13 @@ type SessionMap map[string]struct{}
 // Session represents an server-side update stream
 type Session struct {
 	ID       string
-	Listener pb.SourceHub_ListenServer
+	Listener pb.Iris_ListenServer
 }
 
-// Server implements the generated sourcehub.SourceHubServer interface
+// Server implements the generated pb.IrisServer interface
 type Server struct {
 	SourceFactory   SourceFactory                    //factory method for creating sources
-	sources         map[string]sourcehub.Source      //collection of sources accessed by identifier
+	sources         map[string]iris.Source           //collection of sources accessed by identifier
 	sourcesMutex    *sync.Mutex                      //used when managing our collection of sources
 	sessions        map[string]*Session              //collection of sessions
 	sessionsMutex   *sync.Mutex                      //used to lock the sessions collection
@@ -54,7 +54,7 @@ func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.Conne
 }
 
 // Listen responds with a stream of objects representing source, key, value updates
-func (s *Server) Listen(req *pb.ListenRequest, stream pb.SourceHub_ListenServer) error {
+func (s *Server) Listen(req *pb.ListenRequest, stream pb.Iris_ListenServer) error {
 	if _, err := s.addSession(req.Session, stream); err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (s *Server) Listen(req *pb.ListenRequest, stream pb.SourceHub_ListenServer)
 }
 
 // GetSources responds with a stream of objects representing available sources
-func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.SourceHub_GetSourcesServer) error {
+func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.Iris_GetSourcesServer) error {
 	s.sourcesMutex.Lock()
 	defer s.sourcesMutex.Unlock()
 
@@ -78,7 +78,7 @@ func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.SourceHub_GetSo
 }
 
 // GetKeys responds with a stream of objects representing available sources
-func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.SourceHub_GetKeysServer) error {
+func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) error {
 	source := s.getSourceWithIdentifier(req.Source)
 	keys, err := source.GetKeys()
 	if err != nil {
@@ -397,7 +397,7 @@ func (s *Server) generateSessionID(length int) (string, error) {
 }
 
 // addSession adds the session to the server's collection
-func (s *Server) addSession(sessionIdentifier string, listener pb.SourceHub_ListenServer) (*Session, error) {
+func (s *Server) addSession(sessionIdentifier string, listener pb.Iris_ListenServer) (*Session, error) {
 	if s.sessionsMutex == nil {
 		s.sessionsMutex = &sync.Mutex{}
 	}
@@ -452,7 +452,7 @@ func (s *Server) removeSession(sessionIdentifier string) error {
 }
 
 // getSourceWithIdentifier returns the source with the provided identifier, or the existing one if already created
-func (s *Server) getSourceWithIdentifier(identifier string) sourcehub.Source {
+func (s *Server) getSourceWithIdentifier(identifier string) iris.Source {
 	if s.sourcesMutex == nil {
 		s.sourcesMutex = &sync.Mutex{}
 	}
@@ -461,7 +461,7 @@ func (s *Server) getSourceWithIdentifier(identifier string) sourcehub.Source {
 	defer s.sourcesMutex.Unlock()
 
 	if s.sources == nil {
-		s.sources = make(map[string]sourcehub.Source)
+		s.sources = make(map[string]iris.Source)
 	}
 
 	source := s.sources[identifier]

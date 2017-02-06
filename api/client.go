@@ -7,7 +7,7 @@ import (
 	"io"
 	"sync"
 
-	"gitlab.fg/otis/sourcehub/pb"
+	"gitlab.fg/otis/iris/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -15,11 +15,11 @@ import (
 // UpdateHandler descibes a function used for handling values received by the client
 type UpdateHandler func(update *pb.Update) error
 
-// Client implements the generated sourcehub.SourceHubClient interface
+// Client for communicating with an Iris server
 type Client struct {
 	conn         *grpc.ClientConn
-	rpc          pb.SourceHubClient
-	listenStream pb.SourceHub_ListenClient
+	rpc          pb.IrisClient
+	listenStream pb.Iris_ListenClient
 
 	session             string
 	sourceHandlersMutex *sync.Mutex
@@ -28,7 +28,7 @@ type Client struct {
 	keyHandlers         map[string]map[string][]*UpdateHandler
 }
 
-// NewClient returns a new sourcehub GRPC client for the given server address.
+// NewClient returns a new Iris GRPC client for the given server address.
 // The client's Close method should be called when the returned client is no longer needed.
 func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption) (*Client, error) {
 	if len(serverAddress) == 0 {
@@ -49,7 +49,7 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 		return nil, err
 	}
 
-	c.rpc = pb.NewSourceHubClient(c.conn)
+	c.rpc = pb.NewIrisClient(c.conn)
 	resp, err := c.rpc.Connect(ctx, &pb.ConnectRequest{})
 	c.session = resp.Session
 	if err != nil {
@@ -63,7 +63,7 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 	return c, nil
 }
 
-// NewTLSClient returns a new sourcehub GRPC client for the given server address.
+// NewTLSClient returns a new Iris GRPC client for the given server address.
 // The certificateAuthority field allows you to provide a root certificate authority
 // to use when verifying the remote server's identity.
 // The serverNameOverride field is for testing only. If set to a non empty string,

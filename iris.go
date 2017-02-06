@@ -1,9 +1,9 @@
-package sourcehub
+package iris
 
 import "encoding/json"
 
-//DefaultServiceName for the source-hub service
-const DefaultServiceName = "sourcehub.service.fg"
+//DefaultServiceName for the iris service
+const DefaultServiceName = "iris.service.fg"
 
 //DefaultIdentifier is the default identifier for sources to use in their implementations
 var DefaultIdentifier = "default"

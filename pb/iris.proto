@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package sourcehub.pb;
+package iris.pb;
 option go_package = "pb";
 
-service SourceHub {
+service Iris {
     // Connect responds with a session identifier to be used for subsequent requests
     rpc Connect(ConnectRequest) returns (ConnectResponse) {}
 
