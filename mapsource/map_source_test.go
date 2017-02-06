@@ -100,3 +100,60 @@ func TestMapSource_GetKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestRemove(t *testing.T) {
+	var m = new(MapSource)
+	var keys = []string{"one", "two", "three", "four", "five"}
+	for _, k := range keys {
+		if err := m.Set(k, []byte("value")); err != nil {
+			t.Error(err)
+		}
+	}
+
+	for _, k := range keys {
+		if err := m.Remove(k); err != nil {
+			t.Error(err)
+		}
+	}
+
+	retreivedKeys, err := m.GetKeys()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(retreivedKeys) != 0 {
+		t.Error("Test should have resulted in empty source.")
+	}
+}
+
+func TestRemoveKeyValuePair(t *testing.T) {
+	var m = new(MapSource)
+	var kvps = []sourcehub.KeyValuePair{
+		sourcehub.KeyValuePair{Key: "one", Value: []byte("value")},
+		sourcehub.KeyValuePair{Key: "two", Value: []byte("value")},
+		sourcehub.KeyValuePair{Key: "three", Value: []byte("value")},
+		sourcehub.KeyValuePair{Key: "four", Value: []byte("value")},
+		sourcehub.KeyValuePair{Key: "five", Value: []byte("value")},
+	}
+
+	for _, kvp := range kvps {
+		if err := m.SetKeyValuePair(kvp); err != nil {
+			t.Error(err)
+		}
+	}
+
+	for _, kvp := range kvps {
+		if err := m.RemoveKeyValuePair(kvp); err != nil {
+			t.Error(err)
+		}
+	}
+
+	retreivedKeys, err := m.GetKeys()
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(retreivedKeys) != 0 {
+		t.Error("Test should have resulted in empty source.")
+	}
+}
