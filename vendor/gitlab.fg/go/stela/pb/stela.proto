@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package stela.pb;
+option go_package = "pb";
+
+service Stela {
+    rpc AddClient(AddClientRequest) returns (AddClientResponse) {}
+    rpc Connect(ConnectRequest) returns (stream ServiceMessage) {}
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {}
+    rpc Unsubscribe(SubscribeRequest) returns (SubscribeResponse) {}
+    rpc Register(RegisterRequest) returns (RegisterResponse) {}
+    rpc Deregister(RegisterRequest) returns (RegisterResponse) {}
+    rpc NotifyClients(ServiceMessage) returns (NotifyResponse){}
+    rpc Discover(DiscoverRequest) returns (DiscoverResponse) {}
+    rpc DiscoverOne(DiscoverRequest) returns (ServiceMessage) {}
+    rpc DiscoverAll(DiscoverAllRequest) returns (DiscoverResponse) {}
+    
+    // Peer related RPC is used to request all peer members
+    rpc PeerDiscover(DiscoverRequest) returns (DiscoverResponse) {}
+    rpc PeerDiscoverOne(DiscoverRequest) returns (ServiceMessage) {}
+    rpc PeerDiscoverAll(DiscoverAllRequest) returns (DiscoverResponse) {}
+}
+
+message ServiceMessage {
+    string name = 1;
+    string hostname = 2;
+    string IPv4 = 3;
+    string IPv6 = 4;
+    int32 port = 5;
+    int32 priority = 6;
+    int32 action = 7;
+    bytes value = 8;
+}
+
+// Request
+message AddClientRequest {
+    string client_address = 1;
+}
+
+message ConnectRequest {
+    string client_id = 1;
+}
+
+message SubscribeRequest {
+    string client_id = 1;
+    string service_name = 2;
+}
+
+message RegisterRequest {
+    string client_id = 1;
+    ServiceMessage service = 2;
+}
+
+message DiscoverRequest {
+    string service_name = 1;
+}
+
+message DiscoverAllRequest{}
+
+// Response
+message AddClientResponse {
+    string client_id = 1;
+}
+
+message SubscribeResponse{}
+
+message RegisterResponse{}
+
+message NotifyResponse{}
+
+message DiscoverResponse {
+    repeated ServiceMessage services = 1;
+}

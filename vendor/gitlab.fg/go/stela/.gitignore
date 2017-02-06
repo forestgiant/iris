@@ -1,0 +1,8 @@
+bin
+pkg
+logs
+.DS_Store
+*.db
+*.out
+examples/membership/membership
+cmd/stelawd/stelawd
