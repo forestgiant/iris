@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package iris.pb;
+option go_package = "pb";
+
+service Iris {
+    // Connect responds with a session identifier to be used for subsequent requests
+    rpc Connect(ConnectRequest) returns (ConnectResponse) {}
+
+    // Listen responds with a stream of objects representing source, key, value updates
+    rpc Listen(ListenRequest) returns (stream Update) {}
+
+    // GetSources responds with a stream of objects representing available sources
+    rpc GetSources(GetSourcesRequest) returns (stream GetSourcesResponse) {}    
+
+    // GetKeys expects a source and responds with a stream of objects representing available keys
+    rpc GetKeys(GetKeysRequest) returns (stream GetKeysResponse) {}
+
+    // SetValue sets the value for the specified source and key
+    rpc SetValue(SetValueRequest) returns (SetValueResponse) {}
+
+    // GetValue expects a source and key and responds with the associated value
+    rpc GetValue(GetValueRequest) returns (GetValueResponse) {}
+ 
+    // RemoveValue removes the specified value from the provided source
+    rpc RemoveValue(RemoveValueRequest) returns (RemoveValueResponse) {}
+
+    // RemoveSource removes the specified source
+    rpc RemoveSource(RemoveSourceRequest) returns (RemoveSourceResponse) {}
+
+    // Subscribe indicates that the client wishes to be notified of all updates for the specified source
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse) {}
+
+    // SubscribeKey indicates that the client wishes to be notified of updates associated with
+    // a specific key from the specified source
+    rpc SubscribeKey(SubscribeKeyRequest) returns (SubscribeKeyResponse) {}
+
+    //Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
+    rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse) {}
+
+    //UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
+    // with a specific key from the specified source
+    rpc UnsubscribeKey(UnsubscribeKeyRequest) returns (UnsubscribeKeyResponse) {}
+}
+
+message ConnectRequest {}
+
+message ConnectResponse {
+    string session = 1;
+}
+
+message ListenRequest {
+    string session = 1;
+}
+
+message Update {
+    string source = 1;
+    string key = 2;
+    bytes value = 3;
+}
+
+message GetSourcesRequest {
+    string session = 1;
+}
+
+message GetSourcesResponse {
+    string source = 1;
+}
+
+message GetValueRequest {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+}
+
+message GetValueResponse {
+    bytes value = 1;
+}
+
+message SetValueRequest {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+    bytes value = 4;
+}
+
+message SetValueResponse {
+    bytes value = 1;
+}
+
+message RemoveValueRequest {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+}
+
+message RemoveValueResponse {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+}
+
+message RemoveSourceRequest {
+    string session = 1;
+    string source = 2;
+}
+
+message RemoveSourceResponse {
+    string session = 1;
+    string source = 2;
+}
+
+message GetKeysRequest {
+    string session = 1;
+    string source = 2;
+}
+
+message GetKeysResponse {
+    string key = 1;
+}
+
+message SubscribeRequest {
+    string session = 1;
+    string source = 2;
+} 
+
+message SubscribeResponse {
+    string source = 1;
+}
+
+message SubscribeKeyRequest {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+}
+
+message SubscribeKeyResponse {
+    string source = 1;
+    string key = 2;
+}
+
+message UnsubscribeRequest {
+    string session = 1;
+    string source = 2;
+}
+
+message UnsubscribeResponse {
+    string source = 1;
+}
+
+message UnsubscribeKeyRequest {
+    string session = 1;
+    string source = 2;
+    string key = 3;
+}
+
+message UnsubscribeKeyResponse {
+    string source = 1;
+    string key = 2;
+}
