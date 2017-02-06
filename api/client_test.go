@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/forestgiant/portutil"
-
 	"google.golang.org/grpc"
 
 	"gitlab.fg/otis/sourcehub/pb"
@@ -196,42 +195,135 @@ func TestSettersAndGetters(t *testing.T) {
 	})
 }
 
-func TestSourceSubscriptions(t *testing.T) {
-	deleteTestSources()
+func TestSubscriptions(t *testing.T) {
 
-	var tests = []struct {
-		Source string
-		Key    string
-		Value  []byte
-	}{
-		{Source: testColorsSource, Key: "primary", Value: []byte("red")},
-		{Source: testColorsSource, Key: "secondary", Value: []byte("green")},
-		{Source: testColorsSource, Key: "primary", Value: []byte("blue")},
-	}
+	t.Run("TestSourceSubscriptions", func(t *testing.T) {
+		deleteTestSources()
 
-	wg := &sync.WaitGroup{}
-
-	var sourceSubCallback UpdateHandler = func(u *pb.Update) error {
-		wg.Done()
-		return nil
-	}
-
-	sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
-	defer cancelSourceSub()
-	_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, sourceSubCallback)
-	if err != nil {
-		t.Error(err)
-	}
-
-	for _, test := range tests {
-		setCtx, cancelSet := context.WithCancel(context.Background())
-		defer cancelSet()
-		wg.Add(1)
-		if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
-			t.Error("Failed to set test value")
-			continue
+		var tests = []struct {
+			Source string
+			Key    string
+			Value  []byte
+		}{
+			{Source: testColorsSource, Key: "primary", Value: []byte("red")},
+			{Source: testColorsSource, Key: "secondary", Value: []byte("green")},
+			{Source: testColorsSource, Key: "primary", Value: []byte("blue")},
+			{Source: testSoundsSource, Key: "loud", Value: []byte("thunder")},
+			{Source: testSoundsSource, Key: "quiet", Value: []byte("snow")},
 		}
+
+		wg := &sync.WaitGroup{}
+
+		var sourceSubCallback UpdateHandler = func(u *pb.Update) error {
+			if u.Source != testColorsSource {
+				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
+			} else {
+				wg.Done()
+			}
+			return nil
+		}
+
+		sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
+		defer cancelSourceSub()
+		_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
+		if err != nil {
+			t.Error(err)
+		}
+
+		for _, test := range tests {
+			setCtx, cancelSet := context.WithCancel(context.Background())
+			defer cancelSet()
+
+			if test.Source == testColorsSource {
+				wg.Add(1)
+			}
+			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+				t.Error("Failed to set test value")
+				continue
+			}
+		}
+
+		wg.Wait()
+
+		sourceUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
+		defer cancelUnsubSource()
+		_, err = testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("TestKeySubscriptions", func(t *testing.T) {
+		deleteTestSources()
+
+		testKey := "primary"
+		var tests = []struct {
+			Source string
+			Key    string
+			Value  []byte
+		}{
+			{Source: testColorsSource, Key: testKey, Value: []byte("red")},
+			{Source: testColorsSource, Key: "secondary", Value: []byte("green")},
+			{Source: testColorsSource, Key: testKey, Value: []byte("blue")},
+			{Source: testSoundsSource, Key: "loud", Value: []byte("thunder")},
+			{Source: testSoundsSource, Key: "quiet", Value: []byte("snow")},
+		}
+
+		wg := &sync.WaitGroup{}
+
+		var keySubCallback UpdateHandler = func(u *pb.Update) error {
+			if u.Source == testColorsSource && u.Key == testKey {
+				wg.Done()
+			} else {
+				t.Error("Received update for ", u, "source, but should only receive updates for the", testColorsSource, "source and", testKey, "key")
+			}
+			return nil
+		}
+
+		keySubCtx, cancelKeySub := context.WithCancel(context.Background())
+		defer cancelKeySub()
+		_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
+		if err != nil {
+			t.Error(err)
+		}
+
+		for _, test := range tests {
+			setCtx, cancelSet := context.WithCancel(context.Background())
+			defer cancelSet()
+
+			if test.Source == testColorsSource && test.Key == testKey {
+				wg.Add(1)
+			}
+
+			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+				t.Error("Failed to set test value")
+				continue
+			}
+		}
+
+		wg.Wait()
+
+		keyUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
+		defer cancelUnsubSource()
+		_, err = testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+func TestRemoveHandler(t *testing.T) {
+	var handler1 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler1"); return nil }
+	var handler2 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler2"); return nil }
+	var handler3 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler3"); return nil }
+	var handlers = []*UpdateHandler{&handler1, &handler2, &handler3}
+
+	count := len(handlers)
+	for i := 0; i < count; i++ {
+		handlers = removeHandler(handlers[len(handlers)-1], handlers)
 	}
 
-	wg.Wait()
+	if len(handlers) > 0 {
+		t.Error("Handlers array should have no handlers left after removal.  Found", count)
+	}
 }

@@ -244,13 +244,13 @@ func (c *Client) RemoveSource(ctx context.Context, source string) error {
 }
 
 // Subscribe indicates that the client wishes to be notified of all updates for the specified source
-func (c *Client) Subscribe(ctx context.Context, source string, handler UpdateHandler) (*pb.SubscribeResponse, error) {
+func (c *Client) Subscribe(ctx context.Context, source string, handler *UpdateHandler) (*pb.SubscribeResponse, error) {
 	if c.sourceHandlersMutex == nil {
 		c.sourceHandlersMutex = &sync.Mutex{}
 	}
 
 	c.sourceHandlersMutex.Lock()
-	c.sourceHandlersMutex.Unlock()
+	defer c.sourceHandlersMutex.Unlock()
 
 	if c.sourceHandlers == nil {
 		c.sourceHandlers = make(map[string][]*UpdateHandler)
@@ -259,7 +259,7 @@ func (c *Client) Subscribe(ctx context.Context, source string, handler UpdateHan
 	if c.sourceHandlers[source] == nil {
 		c.sourceHandlers[source] = []*UpdateHandler{}
 	}
-	c.sourceHandlers[source] = append(c.sourceHandlers[source], &handler)
+	c.sourceHandlers[source] = append(c.sourceHandlers[source], handler)
 
 	return c.rpc.Subscribe(ctx, &pb.SubscribeRequest{
 		Session: c.session,
@@ -269,13 +269,13 @@ func (c *Client) Subscribe(ctx context.Context, source string, handler UpdateHan
 
 // SubscribeKey indicates that the client wishes to be notified of updates associated with
 // a specific key from the specified source
-func (c *Client) SubscribeKey(ctx context.Context, source string, key string, handler UpdateHandler) (*pb.SubscribeKeyResponse, error) {
+func (c *Client) SubscribeKey(ctx context.Context, source string, key string, handler *UpdateHandler) (*pb.SubscribeKeyResponse, error) {
 	if c.keyHandlersMutex == nil {
 		c.keyHandlersMutex = &sync.Mutex{}
 	}
 
 	c.keyHandlersMutex.Lock()
-	c.keyHandlersMutex.Unlock()
+	defer c.keyHandlersMutex.Unlock()
 
 	if c.keyHandlers == nil {
 		c.keyHandlers = make(map[string]map[string][]*UpdateHandler)
@@ -285,7 +285,7 @@ func (c *Client) SubscribeKey(ctx context.Context, source string, key string, ha
 		c.keyHandlers[source] = make(map[string][]*UpdateHandler)
 	}
 
-	c.keyHandlers[source][key] = append(c.keyHandlers[source][key], &handler)
+	c.keyHandlers[source][key] = append(c.keyHandlers[source][key], handler)
 
 	return c.rpc.SubscribeKey(ctx, &pb.SubscribeKeyRequest{
 		Session: c.session,
@@ -295,16 +295,16 @@ func (c *Client) SubscribeKey(ctx context.Context, source string, key string, ha
 }
 
 // Unsubscribe indicates that the client no longer wishes to be notified of updates for the specified source
-func (c *Client) Unsubscribe(ctx context.Context, source string, key string, handler UpdateHandler) (*pb.UnsubscribeResponse, error) {
+func (c *Client) Unsubscribe(ctx context.Context, source string, handler *UpdateHandler) (*pb.UnsubscribeResponse, error) {
 	if c.sourceHandlersMutex == nil {
 		c.sourceHandlersMutex = &sync.Mutex{}
 	}
 
 	c.sourceHandlersMutex.Lock()
-	c.sourceHandlersMutex.Unlock()
+	defer c.sourceHandlersMutex.Unlock()
 
 	if c.sourceHandlers != nil && c.sourceHandlers[source] != nil {
-		c.sourceHandlers[source] = removeHandler(&handler, c.sourceHandlers[source])
+		c.sourceHandlers[source] = removeHandler(handler, c.sourceHandlers[source])
 	}
 
 	return c.rpc.Unsubscribe(ctx, &pb.UnsubscribeRequest{
@@ -315,16 +315,19 @@ func (c *Client) Unsubscribe(ctx context.Context, source string, key string, han
 
 // UnsubscribeKey indicates that the client no longer wishes to be notified of updates associated
 // with a specific key from the specified source
-func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, handler UpdateHandler) (*pb.UnsubscribeKeyResponse, error) {
+func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, handler *UpdateHandler) (*pb.UnsubscribeKeyResponse, error) {
 	if c.keyHandlersMutex == nil {
 		c.keyHandlersMutex = &sync.Mutex{}
 	}
 
 	c.keyHandlersMutex.Lock()
-	c.keyHandlersMutex.Unlock()
+	defer c.keyHandlersMutex.Unlock()
 
 	if c.keyHandlers != nil && c.keyHandlers[source] != nil && c.keyHandlers[source][key] != nil {
-		c.keyHandlers[source][key] = removeHandler(&handler, c.keyHandlers[source][key])
+		var thecopy []*UpdateHandler
+		copy(thecopy, c.keyHandlers[source][key])
+		c.keyHandlers[source][key] = removeHandler(handler, thecopy)
+		// c.keyHandlers[source][key] = removeHandler(&handler, c.keyHandlers[source][key])
 	}
 
 	return c.rpc.UnsubscribeKey(ctx, &pb.UnsubscribeKeyRequest{
