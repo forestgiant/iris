@@ -13,6 +13,7 @@ import (
 	"github.com/forestgiant/portutil"
 	"google.golang.org/grpc"
 
+	"gitlab.fg/otis/sourcehub"
 	"gitlab.fg/otis/sourcehub/pb"
 	"gitlab.fg/otis/sourcehub/transport"
 )
@@ -325,5 +326,61 @@ func TestRemoveHandler(t *testing.T) {
 
 	if len(handlers) > 0 {
 		t.Error("Handlers array should have no handlers left after removal.  Found", count)
+	}
+}
+
+func TestRemoveSource(t *testing.T) {
+	deleteTestSources()
+
+	test := sourcehub.KeyValuePair{Key: "primary", Value: []byte("red")}
+	setContext, cancelSet := context.WithCancel(context.Background())
+	defer cancelSet()
+	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {
+		t.Error("Error setting value.", err)
+	}
+
+	removeContext, cancelRemove := context.WithCancel(context.Background())
+	defer cancelRemove()
+	if err := testClient.RemoveSource(removeContext, testColorsSource); err != nil {
+		t.Error("Error removing source.", err)
+	}
+
+	getSourcesContext, cancelGetSources := context.WithCancel(context.Background())
+	defer cancelGetSources()
+	sources, err := testClient.GetSources(getSourcesContext)
+	if err != nil {
+		t.Error("Error getting sources.", err)
+	}
+
+	if len(sources) > 0 {
+		t.Error("Test should have removed all sources.")
+	}
+}
+
+func TestRemoveValue(t *testing.T) {
+	deleteTestSources()
+
+	test := sourcehub.KeyValuePair{Key: "primary", Value: []byte("red")}
+	setContext, cancelSet := context.WithCancel(context.Background())
+	defer cancelSet()
+	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {
+		t.Error("Error setting value.", err)
+	}
+
+	removeContext, cancelRemove := context.WithCancel(context.Background())
+	defer cancelRemove()
+	if err := testClient.RemoveValue(removeContext, testColorsSource, test.Key); err != nil {
+		t.Error("Error removing value for key.", err)
+	}
+
+	getKeysContext, cancelGetKeys := context.WithCancel(context.Background())
+	defer cancelGetKeys()
+	keys, err := testClient.GetKeys(getKeysContext, testColorsSource)
+	if err != nil {
+		t.Error("Error getting keys for the test source.", err)
+	}
+
+	if len(keys) > 0 {
+		t.Error("Test should have removed all keys for the test source.")
 	}
 }
