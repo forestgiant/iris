@@ -9,16 +9,16 @@ const DefaultServiceName = "iris.service.fg"
 var DefaultIdentifier = "default"
 
 //Source is an interface describing the ability to store and retrieve data
-type Source interface {
-	ID() string
-	Set(key string, value []byte) error
-	SetKeyValuePair(kvp KeyValuePair) error
-	Get(key string) (value []byte, err error)
-	GetKeyValuePair(key string) (KeyValuePair, error)
-	Remove(key string) error
-	RemoveKeyValuePair(kvp KeyValuePair) error
-	GetKeys() ([]string, error)
-}
+// type Source interface {
+// 	ID() string
+// 	Set(key string, value []byte) error
+// 	SetKeyValuePair(kvp KeyValuePair) error
+// 	Get(key string) (value []byte, err error)
+// 	GetKeyValuePair(key string) (KeyValuePair, error)
+// 	Remove(key string) error
+// 	RemoveKeyValuePair(kvp KeyValuePair) error
+// 	GetKeys() ([]string, error)
+// }
 
 // Marshaller comment
 type Marshaller interface {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -13,8 +14,10 @@ import (
 	"github.com/forestgiant/portutil"
 	"google.golang.org/grpc"
 
+	fglog "github.com/forestgiant/log"
 	"gitlab.fg/otis/iris"
 	"gitlab.fg/otis/iris/pb"
+	"gitlab.fg/otis/iris/store"
 	"gitlab.fg/otis/iris/transport"
 )
 
@@ -25,6 +28,12 @@ const testColorsSource = "com.forestgiant.iris.testing.colors"
 const testSoundsSource = "com.forestgiant.iris.testing.sounds"
 
 func TestMain(m *testing.M) {
+	wd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Unable to get current working directory", err)
+		os.Exit(1)
+	}
+
 	port, err := portutil.GetUniqueTCP()
 	if err != nil {
 		fmt.Println("unable to obtain open port", err)
@@ -38,9 +47,23 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
+	testRaftDir := filepath.Join(wd, "com.forestgiant.iris.testing.client.raftDir")
+	var store = store.NewStore(":12000", testRaftDir, fglog.Logger{})
+	if err := store.Open(true); err != nil {
+		fmt.Println("Failed to open data store.", err)
+		//TODO: Find a way to defer this call (another call below as well)
+		os.RemoveAll(testRaftDir)
+		os.Exit(1)
+	}
+
+	//TODO: Find a better way to ensure there is a leader
+	time.Sleep(3 * time.Second)
+
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterIrisServer(grpcServer, &transport.Server{})
+	pb.RegisterIrisServer(grpcServer, &transport.Server{
+		Store: store,
+	})
 	errchan := make(chan error)
 	go func() {
 		errchan <- grpcServer.Serve(l)
@@ -67,6 +90,8 @@ func TestMain(m *testing.M) {
 			if err := testClient.Close(); err != nil {
 				log.Fatal(err)
 			}
+			//TODO: Find a way to defer this call (another call above as well)
+			os.RemoveAll(testRaftDir)
 			os.Exit(status)
 		}
 	}
@@ -102,13 +127,16 @@ func TestNewClient(t *testing.T) {
 		if c != nil {
 			if err := c.Close(); err != nil {
 				t.Error(err)
+				return
 			}
 		}
 
 		if test.ShouldError && err == nil {
 			t.Error("NewClient should produce an error when provided an invalid server address")
+			return
 		} else if !test.ShouldError && err != nil {
 			t.Error("NewClient should not have produced error.", err)
+			return
 		}
 	}
 }
@@ -134,6 +162,7 @@ func TestSettersAndGetters(t *testing.T) {
 			defer cancelSet()
 			if err := testClient.SetValue(setContext, test.Source, test.Key, test.Value); err != nil {
 				t.Errorf("Error setting value. %s", err)
+				return
 			}
 
 			if expected[test.Source] == nil {
@@ -147,16 +176,18 @@ func TestSettersAndGetters(t *testing.T) {
 			value, err := testClient.GetValue(getContext, test.Source, test.Key)
 			if err != nil {
 				t.Errorf("Error getting value. %s", err)
+				return
 			}
 
 			if len(test.Value) != len(value) {
 				t.Errorf("Error getting value. Received values does not match sent value in length")
+				return
 			}
 
 			for i := range test.Value {
 				if test.Value[i] != value[i] {
 					t.Errorf("Error getting value. Received values does not match sent value")
-					break
+					return
 				}
 			}
 		}
@@ -168,11 +199,13 @@ func TestSettersAndGetters(t *testing.T) {
 		sources, err := testClient.GetSources(getSourcesContext)
 		if err != nil {
 			t.Error("Failed to get sources.", err)
+			return
 		}
 
 		for _, s := range sources {
 			if _, ok := expected[s]; !ok {
 				t.Errorf("Unexpected value returned in sources.  Received %s.", s)
+				return
 			}
 		}
 	})
@@ -184,11 +217,13 @@ func TestSettersAndGetters(t *testing.T) {
 			keys, err := testClient.GetKeys(getKeysContext, source)
 			if err != nil {
 				t.Error("Failed to get keys for source:", source)
+				return
 			}
 
 			for _, key := range keys {
 				if _, ok := expected[source][key]; !ok {
-					t.Error("GetKeys returned unexpected key")
+					t.Error("GetKeys returned unexpected key", key)
+					return
 				}
 			}
 		}
@@ -229,6 +264,7 @@ func TestSubscriptions(t *testing.T) {
 		_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
 		if err != nil {
 			t.Error(err)
+			return
 		}
 
 		for _, test := range tests {
@@ -240,7 +276,7 @@ func TestSubscriptions(t *testing.T) {
 			}
 			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
 				t.Error("Failed to set test value")
-				continue
+				return
 			}
 		}
 
@@ -251,6 +287,7 @@ func TestSubscriptions(t *testing.T) {
 		_, err = testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
 		if err != nil {
 			t.Error(err)
+			return
 		}
 	})
 
@@ -286,6 +323,7 @@ func TestSubscriptions(t *testing.T) {
 		_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
 		if err != nil {
 			t.Error(err)
+			return
 		}
 
 		for _, test := range tests {
@@ -298,7 +336,7 @@ func TestSubscriptions(t *testing.T) {
 
 			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
 				t.Error("Failed to set test value")
-				continue
+				return
 			}
 		}
 
@@ -309,6 +347,7 @@ func TestSubscriptions(t *testing.T) {
 		_, err = testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
 		if err != nil {
 			t.Error(err)
+			return
 		}
 	})
 }
@@ -326,6 +365,7 @@ func TestRemoveHandler(t *testing.T) {
 
 	if len(handlers) > 0 {
 		t.Error("Handlers array should have no handlers left after removal.  Found", count)
+		return
 	}
 }
 
@@ -337,12 +377,14 @@ func TestRemoveSource(t *testing.T) {
 	defer cancelSet()
 	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {
 		t.Error("Error setting value.", err)
+		return
 	}
 
 	removeContext, cancelRemove := context.WithCancel(context.Background())
 	defer cancelRemove()
 	if err := testClient.RemoveSource(removeContext, testColorsSource); err != nil {
 		t.Error("Error removing source.", err)
+		return
 	}
 
 	getSourcesContext, cancelGetSources := context.WithCancel(context.Background())
@@ -350,10 +392,12 @@ func TestRemoveSource(t *testing.T) {
 	sources, err := testClient.GetSources(getSourcesContext)
 	if err != nil {
 		t.Error("Error getting sources.", err)
+		return
 	}
 
 	if len(sources) > 0 {
 		t.Error("Test should have removed all sources.")
+		return
 	}
 }
 
@@ -365,12 +409,14 @@ func TestRemoveValue(t *testing.T) {
 	defer cancelSet()
 	if err := testClient.SetValue(setContext, testColorsSource, test.Key, test.Value); err != nil {
 		t.Error("Error setting value.", err)
+		return
 	}
 
 	removeContext, cancelRemove := context.WithCancel(context.Background())
 	defer cancelRemove()
 	if err := testClient.RemoveValue(removeContext, testColorsSource, test.Key); err != nil {
 		t.Error("Error removing value for key.", err)
+		return
 	}
 
 	getKeysContext, cancelGetKeys := context.WithCancel(context.Background())
@@ -378,9 +424,11 @@ func TestRemoveValue(t *testing.T) {
 	keys, err := testClient.GetKeys(getKeysContext, testColorsSource)
 	if err != nil {
 		t.Error("Error getting keys for the test source.", err)
+		return
 	}
 
 	if len(keys) > 0 {
 		t.Error("Test should have removed all keys for the test source.")
+		return
 	}
 }

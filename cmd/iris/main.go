@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -19,6 +22,7 @@ import (
 	"gitlab.fg/go/stela"
 	"gitlab.fg/otis/iris"
 	"gitlab.fg/otis/iris/pb"
+	"gitlab.fg/otis/iris/store"
 	"gitlab.fg/otis/iris/transport"
 
 	fglog "github.com/forestgiant/log"
@@ -26,8 +30,9 @@ import (
 )
 
 const (
-	version = "0.8.3"                //version represents the semantic version of this service/api
-	timeout = 500 * time.Millisecond //default timeout for context objects
+	version         = "0.8.3"                //version represents the semantic version of this service/api
+	timeout         = 500 * time.Millisecond //default timeout for context objects
+	defaultRaftAddr = ":12000"
 )
 
 func main() {
@@ -47,17 +52,24 @@ func main() {
 	}
 	defaultCertPath := filepath.Join(wd, "server.cer")
 	defaultKeyPath := filepath.Join(wd, "server.key")
+	defaultRaftDirPath := filepath.Join(wd, "raftDir")
 
 	// Retrieve command line flags
 	var (
-		insecureUsage = "Disable SSL, allowing unenecrypted communication with this service."
-		insecurePtr   = flag.Bool("insecure", false, insecureUsage)
-		certFileUsage = "Path to the certificate file for the server."
-		certFilePtr   = flag.String("cert", defaultCertPath, certFileUsage)
-		keyFileUsage  = "Path to the private key file for the server."
-		keyFilePtr    = flag.String("key", defaultKeyPath, keyFileUsage)
-		nostelaUsage  = "Disable automatic stela registration."
-		noStelaPtr    = flag.Bool("nostela", false, nostelaUsage)
+		insecureUsage    = "Disable SSL, allowing unenecrypted communication with this service."
+		insecurePtr      = flag.Bool("insecure", false, insecureUsage)
+		certFileUsage    = "Path to the certificate file for the server."
+		certFilePtr      = flag.String("cert", defaultCertPath, certFileUsage)
+		keyFileUsage     = "Path to the private key file for the server."
+		keyFilePtr       = flag.String("key", defaultKeyPath, keyFileUsage)
+		nostelaUsage     = "Disable automatic stela registration."
+		noStelaPtr       = flag.Bool("nostela", false, nostelaUsage)
+		raftAddressUsage = "Bind address used for the raft consensus mechanism."
+		raftAddrPtr      = flag.String("raftAddr", defaultRaftAddr, raftAddressUsage)
+		joinAddressUsage = "Join address, if any, used for the raft consensus mechanism."
+		joinAddrPtr      = flag.String("joinAddr", "", joinAddressUsage)
+		raftDirUsage     = "Directory used to store raft data."
+		raftDirPtr       = flag.String("raftDir", defaultRaftDirPath, raftDirUsage)
 	)
 	flag.Parse()
 
@@ -77,6 +89,11 @@ func main() {
 		} else {
 			key = *keyFilePtr
 		}
+	}
+
+	if len(*raftAddrPtr) == 0 {
+		logger.Error("You must provide the bind address to use for the raft consensus mechanism")
+		os.Exit(1)
 	}
 
 	// Obtain an available port
@@ -145,11 +162,44 @@ func main() {
 			opts = append(opts, grpc.Creds(creds))
 		}
 
+		logger.Info("Opening data store.")
+		var store = store.NewStore(*raftAddrPtr, *raftDirPtr, logger)
+		if err := store.Open(*joinAddrPtr == ""); err != nil {
+			logger.Error("Failed to open data store.", "error", err)
+			os.Exit(1)
+		}
+
+		// If join was specified, make the join request.
+		if *joinAddrPtr != "" {
+			logger.Info("Joining raft node", "joinAddr", *joinAddrPtr, "raftAddr", *raftAddrPtr)
+			if err := join(*joinAddrPtr, *raftAddrPtr); err != nil {
+				logger.Error("Failed to join raft node", "joinAddr", *joinAddrPtr, "raftAddr", *raftAddrPtr, "error", err)
+				os.Exit(1)
+			}
+		}
+
 		logger.Info("Starting iris", "port", service.Port, "stela", !*noStelaPtr, "secured", !*insecurePtr)
 		grpcServer := grpc.NewServer(opts...)
-		pb.RegisterIrisServer(grpcServer, &transport.Server{})
+		server := &transport.Server{
+			Store: store,
+		}
+		pb.RegisterIrisServer(grpcServer, server)
 		errchan <- grpcServer.Serve(l)
 	}()
 
 	logger.Error("exiting", "error", (<-errchan).Error())
+}
+
+func join(joinAddr, raftAddr string) error {
+	b, err := json.Marshal(map[string]string{"addr": raftAddr})
+	if err != nil {
+		return err
+	}
+	resp, err := http.Post(fmt.Sprintf("http://%s/join", joinAddr), "application-type/json", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }
