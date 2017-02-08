@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	version         = "0.8.3"                //version represents the semantic version of this service/api
+	version         = "0.9.0"                //version represents the semantic version of this service/api
 	timeout         = 500 * time.Millisecond //default timeout for context objects
 	defaultRaftAddr = ":12000"
 )
