@@ -95,6 +95,14 @@ func (c *Client) initialize() {
 	c.keyHandlersMutex = &sync.Mutex{}
 }
 
+//Join the node reachable at the address to this cluster
+func (c *Client) Join(ctx context.Context, address string) error {
+	if _, err := c.rpc.Join(ctx, &pb.JoinRequest{Address: address}); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close tears down the client's underlying connections
 func (c *Client) Close() error {
 	c.initialize()

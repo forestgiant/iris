@@ -28,7 +28,7 @@ const (
 
 type command struct {
 	Operation string `json:"operation, omitempty"`
-	Source    string `json:"string, omitempty"`
+	Source    string `json:"source, omitempty"`
 	Key       string `json:"key, omitempty"`
 	Value     []byte `json:"value, omitempty"`
 }

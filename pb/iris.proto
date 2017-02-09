@@ -4,6 +4,9 @@ package iris.pb;
 option go_package = "pb";
 
 service Iris {
+    // Join the node reachable at the provided address to this cluster
+    rpc Join(JoinRequest) returns (JoinResponse) {}
+
     // Connect responds with a session identifier to be used for subsequent requests
     rpc Connect(ConnectRequest) returns (ConnectResponse) {}
 
@@ -42,6 +45,12 @@ service Iris {
     // with a specific key from the specified source
     rpc UnsubscribeKey(UnsubscribeKeyRequest) returns (UnsubscribeKeyResponse) {}
 }
+
+message JoinRequest {
+    string address = 1;
+}
+
+message JoinResponse {}
 
 message ConnectRequest {}
 

@@ -51,6 +51,17 @@ func (s *Server) initialize() {
 	s.keySubsMutex = &sync.Mutex{}
 }
 
+// Join the node reachable at the provided address to this cluster
+func (s *Server) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
+	s.initialize()
+
+	if err := s.Store.Join(req.Address); err != nil {
+		return nil, err
+	}
+
+	return &pb.JoinResponse{}, nil
+}
+
 // Connect responds with a stream of objects representing source, key, value updates
 func (s *Server) Connect(ctx context.Context, req *pb.ConnectRequest) (*pb.ConnectResponse, error) {
 	s.initialize()

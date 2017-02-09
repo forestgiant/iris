@@ -9,6 +9,8 @@ It is generated from these files:
 	iris.proto
 
 It has these top-level messages:
+	JoinRequest
+	JoinResponse
 	ConnectRequest
 	ConnectResponse
 	ListenRequest
@@ -56,13 +58,37 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type JoinRequest struct {
+	Address string `protobuf:"bytes,1,opt,name=address" json:"address,omitempty"`
+}
+
+func (m *JoinRequest) Reset()                    { *m = JoinRequest{} }
+func (m *JoinRequest) String() string            { return proto.CompactTextString(m) }
+func (*JoinRequest) ProtoMessage()               {}
+func (*JoinRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *JoinRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+type JoinResponse struct {
+}
+
+func (m *JoinResponse) Reset()                    { *m = JoinResponse{} }
+func (m *JoinResponse) String() string            { return proto.CompactTextString(m) }
+func (*JoinResponse) ProtoMessage()               {}
+func (*JoinResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
 type ConnectRequest struct {
 }
 
 func (m *ConnectRequest) Reset()                    { *m = ConnectRequest{} }
 func (m *ConnectRequest) String() string            { return proto.CompactTextString(m) }
 func (*ConnectRequest) ProtoMessage()               {}
-func (*ConnectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*ConnectRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 type ConnectResponse struct {
 	Session string `protobuf:"bytes,1,opt,name=session" json:"session,omitempty"`
@@ -71,7 +97,7 @@ type ConnectResponse struct {
 func (m *ConnectResponse) Reset()                    { *m = ConnectResponse{} }
 func (m *ConnectResponse) String() string            { return proto.CompactTextString(m) }
 func (*ConnectResponse) ProtoMessage()               {}
-func (*ConnectResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*ConnectResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *ConnectResponse) GetSession() string {
 	if m != nil {
@@ -87,7 +113,7 @@ type ListenRequest struct {
 func (m *ListenRequest) Reset()                    { *m = ListenRequest{} }
 func (m *ListenRequest) String() string            { return proto.CompactTextString(m) }
 func (*ListenRequest) ProtoMessage()               {}
-func (*ListenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*ListenRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
 
 func (m *ListenRequest) GetSession() string {
 	if m != nil {
@@ -105,7 +131,7 @@ type Update struct {
 func (m *Update) Reset()                    { *m = Update{} }
 func (m *Update) String() string            { return proto.CompactTextString(m) }
 func (*Update) ProtoMessage()               {}
-func (*Update) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+func (*Update) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
 
 func (m *Update) GetSource() string {
 	if m != nil {
@@ -135,7 +161,7 @@ type GetSourcesRequest struct {
 func (m *GetSourcesRequest) Reset()                    { *m = GetSourcesRequest{} }
 func (m *GetSourcesRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetSourcesRequest) ProtoMessage()               {}
-func (*GetSourcesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+func (*GetSourcesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
 
 func (m *GetSourcesRequest) GetSession() string {
 	if m != nil {
@@ -151,7 +177,7 @@ type GetSourcesResponse struct {
 func (m *GetSourcesResponse) Reset()                    { *m = GetSourcesResponse{} }
 func (m *GetSourcesResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetSourcesResponse) ProtoMessage()               {}
-func (*GetSourcesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+func (*GetSourcesResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
 
 func (m *GetSourcesResponse) GetSource() string {
 	if m != nil {
@@ -169,7 +195,7 @@ type GetValueRequest struct {
 func (m *GetValueRequest) Reset()                    { *m = GetValueRequest{} }
 func (m *GetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetValueRequest) ProtoMessage()               {}
-func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+func (*GetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
 func (m *GetValueRequest) GetSession() string {
 	if m != nil {
@@ -199,7 +225,7 @@ type GetValueResponse struct {
 func (m *GetValueResponse) Reset()                    { *m = GetValueResponse{} }
 func (m *GetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetValueResponse) ProtoMessage()               {}
-func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+func (*GetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
 
 func (m *GetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -218,7 +244,7 @@ type SetValueRequest struct {
 func (m *SetValueRequest) Reset()                    { *m = SetValueRequest{} }
 func (m *SetValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*SetValueRequest) ProtoMessage()               {}
-func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
+func (*SetValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
 
 func (m *SetValueRequest) GetSession() string {
 	if m != nil {
@@ -255,7 +281,7 @@ type SetValueResponse struct {
 func (m *SetValueResponse) Reset()                    { *m = SetValueResponse{} }
 func (m *SetValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*SetValueResponse) ProtoMessage()               {}
-func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+func (*SetValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
 
 func (m *SetValueResponse) GetValue() []byte {
 	if m != nil {
@@ -273,7 +299,7 @@ type RemoveValueRequest struct {
 func (m *RemoveValueRequest) Reset()                    { *m = RemoveValueRequest{} }
 func (m *RemoveValueRequest) String() string            { return proto.CompactTextString(m) }
 func (*RemoveValueRequest) ProtoMessage()               {}
-func (*RemoveValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+func (*RemoveValueRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
 
 func (m *RemoveValueRequest) GetSession() string {
 	if m != nil {
@@ -305,7 +331,7 @@ type RemoveValueResponse struct {
 func (m *RemoveValueResponse) Reset()                    { *m = RemoveValueResponse{} }
 func (m *RemoveValueResponse) String() string            { return proto.CompactTextString(m) }
 func (*RemoveValueResponse) ProtoMessage()               {}
-func (*RemoveValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+func (*RemoveValueResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
 
 func (m *RemoveValueResponse) GetSession() string {
 	if m != nil {
@@ -336,7 +362,7 @@ type RemoveSourceRequest struct {
 func (m *RemoveSourceRequest) Reset()                    { *m = RemoveSourceRequest{} }
 func (m *RemoveSourceRequest) String() string            { return proto.CompactTextString(m) }
 func (*RemoveSourceRequest) ProtoMessage()               {}
-func (*RemoveSourceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+func (*RemoveSourceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
 
 func (m *RemoveSourceRequest) GetSession() string {
 	if m != nil {
@@ -360,7 +386,7 @@ type RemoveSourceResponse struct {
 func (m *RemoveSourceResponse) Reset()                    { *m = RemoveSourceResponse{} }
 func (m *RemoveSourceResponse) String() string            { return proto.CompactTextString(m) }
 func (*RemoveSourceResponse) ProtoMessage()               {}
-func (*RemoveSourceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+func (*RemoveSourceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
 
 func (m *RemoveSourceResponse) GetSession() string {
 	if m != nil {
@@ -384,7 +410,7 @@ type GetKeysRequest struct {
 func (m *GetKeysRequest) Reset()                    { *m = GetKeysRequest{} }
 func (m *GetKeysRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetKeysRequest) ProtoMessage()               {}
-func (*GetKeysRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+func (*GetKeysRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
 
 func (m *GetKeysRequest) GetSession() string {
 	if m != nil {
@@ -407,7 +433,7 @@ type GetKeysResponse struct {
 func (m *GetKeysResponse) Reset()                    { *m = GetKeysResponse{} }
 func (m *GetKeysResponse) String() string            { return proto.CompactTextString(m) }
 func (*GetKeysResponse) ProtoMessage()               {}
-func (*GetKeysResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+func (*GetKeysResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
 
 func (m *GetKeysResponse) GetKey() string {
 	if m != nil {
@@ -424,7 +450,7 @@ type SubscribeRequest struct {
 func (m *SubscribeRequest) Reset()                    { *m = SubscribeRequest{} }
 func (m *SubscribeRequest) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeRequest) ProtoMessage()               {}
-func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+func (*SubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
 
 func (m *SubscribeRequest) GetSession() string {
 	if m != nil {
@@ -447,7 +473,7 @@ type SubscribeResponse struct {
 func (m *SubscribeResponse) Reset()                    { *m = SubscribeResponse{} }
 func (m *SubscribeResponse) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeResponse) ProtoMessage()               {}
-func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{17} }
+func (*SubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
 
 func (m *SubscribeResponse) GetSource() string {
 	if m != nil {
@@ -465,7 +491,7 @@ type SubscribeKeyRequest struct {
 func (m *SubscribeKeyRequest) Reset()                    { *m = SubscribeKeyRequest{} }
 func (m *SubscribeKeyRequest) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeKeyRequest) ProtoMessage()               {}
-func (*SubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{18} }
+func (*SubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
 
 func (m *SubscribeKeyRequest) GetSession() string {
 	if m != nil {
@@ -496,7 +522,7 @@ type SubscribeKeyResponse struct {
 func (m *SubscribeKeyResponse) Reset()                    { *m = SubscribeKeyResponse{} }
 func (m *SubscribeKeyResponse) String() string            { return proto.CompactTextString(m) }
 func (*SubscribeKeyResponse) ProtoMessage()               {}
-func (*SubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{19} }
+func (*SubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
 
 func (m *SubscribeKeyResponse) GetSource() string {
 	if m != nil {
@@ -520,7 +546,7 @@ type UnsubscribeRequest struct {
 func (m *UnsubscribeRequest) Reset()                    { *m = UnsubscribeRequest{} }
 func (m *UnsubscribeRequest) String() string            { return proto.CompactTextString(m) }
 func (*UnsubscribeRequest) ProtoMessage()               {}
-func (*UnsubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{20} }
+func (*UnsubscribeRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
 
 func (m *UnsubscribeRequest) GetSession() string {
 	if m != nil {
@@ -543,7 +569,7 @@ type UnsubscribeResponse struct {
 func (m *UnsubscribeResponse) Reset()                    { *m = UnsubscribeResponse{} }
 func (m *UnsubscribeResponse) String() string            { return proto.CompactTextString(m) }
 func (*UnsubscribeResponse) ProtoMessage()               {}
-func (*UnsubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{21} }
+func (*UnsubscribeResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{23} }
 
 func (m *UnsubscribeResponse) GetSource() string {
 	if m != nil {
@@ -561,7 +587,7 @@ type UnsubscribeKeyRequest struct {
 func (m *UnsubscribeKeyRequest) Reset()                    { *m = UnsubscribeKeyRequest{} }
 func (m *UnsubscribeKeyRequest) String() string            { return proto.CompactTextString(m) }
 func (*UnsubscribeKeyRequest) ProtoMessage()               {}
-func (*UnsubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{22} }
+func (*UnsubscribeKeyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{24} }
 
 func (m *UnsubscribeKeyRequest) GetSession() string {
 	if m != nil {
@@ -592,7 +618,7 @@ type UnsubscribeKeyResponse struct {
 func (m *UnsubscribeKeyResponse) Reset()                    { *m = UnsubscribeKeyResponse{} }
 func (m *UnsubscribeKeyResponse) String() string            { return proto.CompactTextString(m) }
 func (*UnsubscribeKeyResponse) ProtoMessage()               {}
-func (*UnsubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{23} }
+func (*UnsubscribeKeyResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{25} }
 
 func (m *UnsubscribeKeyResponse) GetSource() string {
 	if m != nil {
@@ -609,6 +635,8 @@ func (m *UnsubscribeKeyResponse) GetKey() string {
 }
 
 func init() {
+	proto.RegisterType((*JoinRequest)(nil), "iris.pb.JoinRequest")
+	proto.RegisterType((*JoinResponse)(nil), "iris.pb.JoinResponse")
 	proto.RegisterType((*ConnectRequest)(nil), "iris.pb.ConnectRequest")
 	proto.RegisterType((*ConnectResponse)(nil), "iris.pb.ConnectResponse")
 	proto.RegisterType((*ListenRequest)(nil), "iris.pb.ListenRequest")
@@ -646,6 +674,8 @@ const _ = grpc.SupportPackageIsVersion4
 // Client API for Iris service
 
 type IrisClient interface {
+	// Join the node reachable at the provided address to this cluster
+	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error)
 	// Connect responds with a session identifier to be used for subsequent requests
 	Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error)
 	// Listen responds with a stream of objects representing source, key, value updates
@@ -680,6 +710,15 @@ type irisClient struct {
 
 func NewIrisClient(cc *grpc.ClientConn) IrisClient {
 	return &irisClient{cc}
+}
+
+func (c *irisClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error) {
+	out := new(JoinResponse)
+	err := grpc.Invoke(ctx, "/iris.pb.Iris/Join", in, out, c.cc, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *irisClient) Connect(ctx context.Context, in *ConnectRequest, opts ...grpc.CallOption) (*ConnectResponse, error) {
@@ -862,6 +901,8 @@ func (c *irisClient) UnsubscribeKey(ctx context.Context, in *UnsubscribeKeyReque
 // Server API for Iris service
 
 type IrisServer interface {
+	// Join the node reachable at the provided address to this cluster
+	Join(context.Context, *JoinRequest) (*JoinResponse, error)
 	// Connect responds with a session identifier to be used for subsequent requests
 	Connect(context.Context, *ConnectRequest) (*ConnectResponse, error)
 	// Listen responds with a stream of objects representing source, key, value updates
@@ -892,6 +933,24 @@ type IrisServer interface {
 
 func RegisterIrisServer(s *grpc.Server, srv IrisServer) {
 	s.RegisterService(&_Iris_serviceDesc, srv)
+}
+
+func _Iris_Join_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IrisServer).Join(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iris.pb.Iris/Join",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IrisServer).Join(ctx, req.(*JoinRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Iris_Connect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -1124,6 +1183,10 @@ var _Iris_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*IrisServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Join",
+			Handler:    _Iris_Join_Handler,
+		},
+		{
 			MethodName: "Connect",
 			Handler:    _Iris_Connect_Handler,
 		},
@@ -1183,42 +1246,44 @@ var _Iris_serviceDesc = grpc.ServiceDesc{
 func init() { proto.RegisterFile("iris.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 581 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x56, 0x5d, 0x73, 0xd2, 0x40,
-	0x14, 0x6d, 0x00, 0xa1, 0x3d, 0x56, 0xa0, 0x17, 0x44, 0x8c, 0x5f, 0x9d, 0xf5, 0x05, 0xa7, 0x96,
-	0xe9, 0xe8, 0xf8, 0xea, 0xb4, 0xd8, 0x31, 0xad, 0xd5, 0x17, 0x18, 0x1c, 0xab, 0x4f, 0x05, 0xf7,
-	0x21, 0x53, 0x4d, 0x30, 0x1b, 0x3a, 0xc3, 0xcf, 0xf5, 0x9f, 0x38, 0x4d, 0x36, 0x9b, 0xcd, 0x07,
-	0x8d, 0xa5, 0xbc, 0x65, 0xf7, 0xde, 0x3d, 0xf7, 0xdc, 0xcb, 0x9e, 0xb3, 0x00, 0xb6, 0x67, 0x8b,
-	0xfe, 0xcc, 0x73, 0x7d, 0x97, 0x6a, 0xe1, 0xf7, 0x84, 0x35, 0x51, 0xff, 0xe0, 0x3a, 0x0e, 0x9f,
-	0xfa, 0x43, 0xfe, 0x67, 0xce, 0x85, 0xcf, 0xf6, 0xd0, 0x50, 0x3b, 0x62, 0xe6, 0x3a, 0x82, 0x53,
-	0x17, 0x35, 0xc1, 0x85, 0xb0, 0x5d, 0xa7, 0x6b, 0xec, 0x1a, 0xbd, 0xad, 0x61, 0xb4, 0x64, 0xaf,
-	0xf0, 0xe0, 0xb3, 0x2d, 0x7c, 0xee, 0xc8, 0xd3, 0x37, 0xa4, 0x9e, 0xa0, 0x3a, 0x9e, 0xfd, 0xbc,
-	0xf0, 0x39, 0x75, 0x50, 0x15, 0xee, 0xdc, 0x9b, 0x72, 0x99, 0x22, 0x57, 0xd4, 0x44, 0xf9, 0x92,
-	0x2f, 0xba, 0xa5, 0x60, 0xf3, 0xfa, 0x93, 0xda, 0xb8, 0x77, 0x75, 0xf1, 0x6b, 0xce, 0xbb, 0xe5,
-	0x5d, 0xa3, 0xb7, 0x3d, 0x0c, 0x17, 0x6c, 0x1f, 0x3b, 0x16, 0xf7, 0x47, 0xc1, 0x21, 0x51, 0x5c,
-	0xf8, 0x35, 0x48, 0x4f, 0x97, 0x3d, 0x2d, 0x21, 0xc1, 0xc6, 0x68, 0x58, 0xdc, 0xff, 0x7a, 0x5d,
-	0xa8, 0x10, 0x5a, 0x03, 0x29, 0xe5, 0x75, 0x52, 0x56, 0x9d, 0xb0, 0x1e, 0x9a, 0x31, 0xac, 0xa4,
-	0xa0, 0xba, 0x33, 0xf4, 0xee, 0x2e, 0xd1, 0x18, 0xad, 0x9f, 0x40, 0x5c, 0xac, 0xa2, 0x17, 0xeb,
-	0xa1, 0x39, 0xfa, 0x3f, 0x5a, 0xdf, 0x40, 0x43, 0xfe, 0xdb, 0xbd, 0xe2, 0x6b, 0x1f, 0xcd, 0x39,
-	0x5a, 0x09, 0xe4, 0xa2, 0x4b, 0x77, 0x0b, 0x68, 0x2b, 0x82, 0x0e, 0x7f, 0xfd, 0x95, 0x59, 0xb3,
-	0x13, 0xb4, 0x93, 0x40, 0xab, 0x92, 0x64, 0x03, 0xd4, 0x2d, 0xee, 0x9f, 0xf1, 0x85, 0x58, 0x9d,
-	0xcd, 0xcb, 0xe0, 0x8e, 0x86, 0x18, 0x92, 0x88, 0xec, 0xdd, 0x88, 0x7b, 0x3f, 0x46, 0x73, 0x34,
-	0x9f, 0x88, 0xa9, 0x67, 0x4f, 0xee, 0xd0, 0xf8, 0x1e, 0x76, 0x34, 0x94, 0x02, 0xed, 0x9c, 0xa3,
-	0xa5, 0x92, 0xcf, 0xf8, 0x62, 0x9d, 0x97, 0xe4, 0x10, 0xed, 0x24, 0xf4, 0xcd, 0x54, 0xb2, 0x5e,
-	0xc2, 0x3e, 0x82, 0xc6, 0x8e, 0xb8, 0xfb, 0x44, 0xf6, 0xd1, 0x4a, 0xe0, 0x14, 0xcc, 0xe4, 0x07,
-	0x1e, 0x6a, 0xe9, 0x6b, 0x9e, 0xca, 0x00, 0x9d, 0x34, 0xf8, 0x6d, 0xe7, 0xf2, 0xe6, 0x6f, 0x15,
-	0x95, 0x53, 0xcf, 0x16, 0xf4, 0x1e, 0x35, 0x69, 0xfc, 0xf4, 0xa8, 0x2f, 0xdf, 0x87, 0x7e, 0xf2,
-	0x71, 0x30, 0xbb, 0xd9, 0x40, 0x58, 0x90, 0x6d, 0xd0, 0x3b, 0x54, 0xc3, 0xb7, 0x80, 0x3a, 0x2a,
-	0x2b, 0xf1, 0x38, 0x98, 0x0d, 0xb5, 0x1f, 0xbe, 0x04, 0x6c, 0xe3, 0xc0, 0xa0, 0x53, 0x20, 0xb6,
-	0x67, 0x32, 0x55, 0x4a, 0xc6, 0xe2, 0xcd, 0x27, 0xb9, 0xb1, 0xa8, 0xfe, 0x81, 0x41, 0x87, 0xa8,
-	0x49, 0x5d, 0x68, 0x1d, 0x24, 0xd5, 0xa6, 0x75, 0x90, 0x92, 0x50, 0x80, 0x70, 0x84, 0xcd, 0xc8,
-	0x0f, 0x29, 0xce, 0x4c, 0xf9, 0xb1, 0xf9, 0x38, 0x27, 0xa2, 0xc6, 0x70, 0x84, 0x4d, 0x2b, 0x0b,
-	0x61, 0x2d, 0x85, 0xb0, 0xb2, 0x10, 0x9f, 0x70, 0x5f, 0x73, 0x44, 0x8a, 0xfb, 0xce, 0x3a, 0xb0,
-	0xf9, 0x34, 0x3f, 0xa8, 0xb0, 0xbe, 0x60, 0x5b, 0x77, 0x2e, 0x4a, 0xe7, 0x27, 0x9c, 0xd1, 0x7c,
-	0xb6, 0x24, 0xaa, 0xe0, 0x8e, 0xb1, 0xa5, 0x74, 0x48, 0xda, 0x1c, 0x52, 0xba, 0x32, 0xcd, 0xbc,
-	0x90, 0x4e, 0x4a, 0x57, 0xb3, 0x46, 0x2a, 0xc7, 0x3f, 0x34, 0x52, 0x79, 0x16, 0x10, 0xce, 0x4b,
-	0x93, 0x81, 0x36, 0xaf, 0xac, 0xe0, 0xb5, 0x79, 0xe5, 0xa8, 0x98, 0x6d, 0xd0, 0x08, 0xf5, 0xa4,
-	0xa4, 0xe8, 0x79, 0xde, 0x09, 0x8d, 0xde, 0x8b, 0xa5, 0xf1, 0x08, 0x74, 0x50, 0xf9, 0x5e, 0x9a,
-	0x4d, 0x26, 0xd5, 0xe0, 0xbf, 0xd7, 0xdb, 0x7f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x73, 0x01, 0xa5,
-	0x6e, 0x89, 0x09, 0x00, 0x00,
+	// 623 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0x56, 0x4b, 0x6f, 0xda, 0x4c,
+	0x14, 0x8d, 0x13, 0x3e, 0x48, 0x4e, 0xf8, 0x80, 0x5c, 0x08, 0xa5, 0xee, 0x2b, 0x9a, 0x2e, 0x4a,
+	0x95, 0x06, 0x45, 0xad, 0xb2, 0xad, 0x12, 0x1a, 0xd5, 0x79, 0xb4, 0x1b, 0x10, 0x55, 0xd3, 0xae,
+	0x78, 0xcc, 0xc2, 0x4a, 0x6b, 0x53, 0x8f, 0x89, 0xc4, 0x3f, 0xe9, 0xcf, 0xad, 0xc0, 0xe3, 0xf1,
+	0xf8, 0x41, 0x69, 0x08, 0x3b, 0xcf, 0xdc, 0x33, 0x67, 0xce, 0xbd, 0xcc, 0x3d, 0x17, 0xc0, 0xf6,
+	0x6c, 0xd1, 0x1a, 0x7b, 0xae, 0xef, 0x52, 0x21, 0xf8, 0x1e, 0xb0, 0x57, 0xd8, 0xbd, 0x72, 0x6d,
+	0xa7, 0xc3, 0x7f, 0x4d, 0xb8, 0xf0, 0xa9, 0x81, 0x42, 0x7f, 0x34, 0xf2, 0xb8, 0x10, 0x0d, 0xe3,
+	0xc0, 0x68, 0xee, 0x74, 0xc2, 0x25, 0x2b, 0xa1, 0x18, 0x00, 0xc5, 0xd8, 0x75, 0x04, 0x67, 0x15,
+	0x94, 0x3e, 0xb8, 0x8e, 0xc3, 0x87, 0xbe, 0x3c, 0xcb, 0x0e, 0x51, 0x56, 0x3b, 0x01, 0x68, 0x46,
+	0x27, 0xb8, 0x10, 0xb6, 0xeb, 0x84, 0x74, 0x72, 0xc9, 0x5e, 0xe3, 0xff, 0x4f, 0xb6, 0xf0, 0xb9,
+	0x7e, 0xf3, 0x02, 0xe8, 0x05, 0xf2, 0xbd, 0xf1, 0xa8, 0xef, 0x73, 0xaa, 0x23, 0x2f, 0xdc, 0x89,
+	0x37, 0xe4, 0x12, 0x22, 0x57, 0x54, 0xc1, 0xd6, 0x2d, 0x9f, 0x36, 0x36, 0xe7, 0x9b, 0xb3, 0x4f,
+	0xaa, 0xe1, 0xbf, 0xbb, 0xfe, 0x8f, 0x09, 0x6f, 0x6c, 0x1d, 0x18, 0xcd, 0x62, 0x27, 0x58, 0xb0,
+	0x23, 0xec, 0x59, 0xdc, 0xef, 0xce, 0x0f, 0x89, 0xe5, 0x17, 0xbf, 0x01, 0xe9, 0x70, 0x99, 0xd3,
+	0x02, 0x11, 0xac, 0x87, 0xb2, 0xc5, 0xfd, 0x2f, 0xb3, 0x8b, 0x96, 0x52, 0x6b, 0x24, 0x9b, 0x59,
+	0x99, 0x6c, 0xa9, 0x4c, 0x58, 0x13, 0x95, 0x88, 0x56, 0x4a, 0x50, 0xd9, 0x19, 0x7a, 0x76, 0xb7,
+	0x28, 0x77, 0xd7, 0x2f, 0x20, 0xba, 0x2c, 0xa7, 0x5f, 0xd6, 0x44, 0xa5, 0xfb, 0x6f, 0xb2, 0xbe,
+	0x82, 0x3a, 0xfc, 0xa7, 0x7b, 0xc7, 0xd7, 0x5e, 0x9a, 0x1b, 0x54, 0x63, 0xcc, 0xcb, 0x1e, 0xdd,
+	0x3d, 0xa8, 0xad, 0x90, 0x3a, 0xf8, 0xf5, 0x57, 0x56, 0xcd, 0x2e, 0x50, 0x8b, 0x13, 0xad, 0x2a,
+	0x92, 0xb5, 0x51, 0xb2, 0xb8, 0x7f, 0xcd, 0xa7, 0x62, 0x75, 0x35, 0x2f, 0xe7, 0x6f, 0x34, 0xe0,
+	0x90, 0x42, 0x64, 0xee, 0x46, 0x94, 0xfb, 0x39, 0x2a, 0xdd, 0xc9, 0x40, 0x0c, 0x3d, 0x7b, 0xf0,
+	0x80, 0xc4, 0x0f, 0xb1, 0xa7, 0xb1, 0x2c, 0xe9, 0x9d, 0x1b, 0x54, 0x15, 0xf8, 0x9a, 0x4f, 0xd7,
+	0xf9, 0x48, 0x4e, 0x51, 0x8b, 0x53, 0xff, 0x5d, 0x4a, 0xda, 0x4b, 0xd8, 0x47, 0x50, 0xcf, 0x11,
+	0x0f, 0xaf, 0xc8, 0x11, 0xaa, 0x31, 0x9e, 0x25, 0x35, 0xf9, 0x8e, 0x7d, 0x0d, 0xbe, 0xe6, 0xaa,
+	0xb4, 0x51, 0x4f, 0x92, 0xdf, 0xb7, 0x2e, 0x6f, 0x7f, 0x17, 0x90, 0xbb, 0xf4, 0x6c, 0x41, 0x27,
+	0xc8, 0xcd, 0x46, 0x03, 0xd5, 0x5a, 0x72, 0xaa, 0xb4, 0xb4, 0x91, 0x62, 0xee, 0x27, 0x76, 0xe5,
+	0xfc, 0xd8, 0xa0, 0xf7, 0x28, 0xc8, 0x79, 0x41, 0x8f, 0x14, 0x26, 0x3e, 0x53, 0xcc, 0x46, 0x3a,
+	0xa0, 0xce, 0x9f, 0x20, 0x1f, 0x8c, 0x10, 0xaa, 0x2b, 0x54, 0x6c, 0xa6, 0x98, 0x65, 0xb5, 0x1f,
+	0x0c, 0x10, 0xb6, 0x71, 0x6c, 0xd0, 0x25, 0x10, 0xb9, 0x3a, 0x99, 0x0a, 0x92, 0x9a, 0x0c, 0xe6,
+	0x93, 0xcc, 0x58, 0x78, 0xff, 0xb1, 0x41, 0xa7, 0x28, 0xc8, 0x76, 0xd2, 0x32, 0x88, 0x37, 0xa9,
+	0x96, 0x41, 0xa2, 0xf3, 0xe6, 0x0c, 0x67, 0xd8, 0x0e, 0x6d, 0x94, 0x22, 0x64, 0xc2, 0xc6, 0xcd,
+	0xc7, 0x19, 0x11, 0x55, 0x86, 0x33, 0x6c, 0x5b, 0x69, 0x0a, 0x6b, 0x21, 0x85, 0x95, 0xa6, 0xb8,
+	0xc2, 0xae, 0x66, 0xa4, 0x14, 0xe5, 0x9d, 0x36, 0x6e, 0xf3, 0x69, 0x76, 0x50, 0x71, 0x7d, 0x46,
+	0x51, 0x37, 0x3c, 0x4a, 0xe2, 0x63, 0x86, 0x6a, 0x3e, 0x5b, 0x10, 0x55, 0x74, 0xe7, 0xd8, 0x51,
+	0xed, 0x4b, 0x5a, 0x1d, 0x12, 0xed, 0x68, 0x9a, 0x59, 0x21, 0x5d, 0x94, 0x6e, 0x02, 0x9a, 0xa8,
+	0x0c, 0xdb, 0xd1, 0x44, 0x65, 0x39, 0x47, 0x50, 0x2f, 0xad, 0x7b, 0xb4, 0x7a, 0xa5, 0x7d, 0x42,
+	0xab, 0x57, 0x46, 0xf3, 0xb3, 0x0d, 0xea, 0xa2, 0x14, 0xef, 0x44, 0x7a, 0x9e, 0x75, 0x42, 0x93,
+	0xf7, 0x62, 0x61, 0x3c, 0x24, 0x6d, 0xe7, 0xbe, 0x6d, 0x8e, 0x07, 0x83, 0xfc, 0xfc, 0xbf, 0xde,
+	0xbb, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xf0, 0x5d, 0x0d, 0xfc, 0xf9, 0x09, 0x00, 0x00,
 }
