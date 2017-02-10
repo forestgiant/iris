@@ -37,6 +37,7 @@ func (f *fsm) applySet(source string, key string, value []byte) interface{} {
 		f.storage[source] = make(kvs)
 	}
 	f.storage[source][key] = value
+	f.logger.Info("SET", "source", source, "key", key, "value", value)
 
 	return nil
 }
@@ -44,6 +45,7 @@ func (f *fsm) applySet(source string, key string, value []byte) interface{} {
 func (f *fsm) appleDeleteSource(source string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.logger.Info("DELETE", "source")
 	delete(f.storage, source)
 	return nil
 }
@@ -52,6 +54,7 @@ func (f *fsm) appleDeleteKey(source string, key string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
+	f.logger.Info("DELETE", "source", source, "key", key)
 	if f.storage[source] != nil {
 		delete(f.storage[source], key)
 		if len(f.storage[source]) == 0 {
