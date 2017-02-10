@@ -52,10 +52,10 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 
 	c.rpc = pb.NewIrisClient(c.conn)
 	resp, err := c.rpc.Connect(ctx, &pb.ConnectRequest{})
-	c.session = resp.Session
 	if err != nil {
 		return c, err
 	}
+	c.session = resp.Session
 
 	if err := c.listen(context.Background()); err != nil {
 		return nil, err
@@ -244,6 +244,11 @@ func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byt
 		Source:  source,
 		Key:     key,
 	})
+
+	if resp == nil {
+		return nil, err
+	}
+
 	return resp.Value, err
 }
 
