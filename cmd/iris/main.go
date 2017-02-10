@@ -16,13 +16,13 @@ import (
 
 	"github.com/forestgiant/portutil"
 	"github.com/forestgiant/semver"
-	"gitlab.fg/go/stela"
 	"gitlab.fg/otis/iris"
 	"gitlab.fg/otis/iris/pb"
 	"gitlab.fg/otis/iris/store"
 	"gitlab.fg/otis/iris/transport"
 
 	fglog "github.com/forestgiant/log"
+	"gitlab.fg/go/stela"
 	stela_api "gitlab.fg/go/stela/api"
 	iris_api "gitlab.fg/otis/iris/api"
 )
@@ -61,6 +61,8 @@ func run() (status int) {
 		insecureUsage    = "Disable SSL, allowing unenecrypted communication with this service."
 		noStelaParam     = "nostela"
 		nostelaUsage     = "Disable automatic stela registration."
+		stelaAddrParam   = "stela"
+		stelaAddrUsage   = "Address of the stela service you would like to use for discovery"
 		certPathParam    = "cert"
 		certPathUsage    = "Path to the certificate file for the server."
 		keyPathParam     = "key"
@@ -74,17 +76,19 @@ func run() (status int) {
 	)
 
 	var (
-		insecure = false
-		nostela  = false
-		certPath = filepath.Join(wd, "server.cer")
-		keyPath  = filepath.Join(wd, "server.key")
-		raftDir  = filepath.Join(wd, "raftDir")
-		raftPort = 0
-		joinAddr = ""
+		insecure  = false
+		nostela   = false
+		stelaAddr = stela.DefaultStelaAddress
+		certPath  = filepath.Join(wd, "server.cer")
+		keyPath   = filepath.Join(wd, "server.key")
+		raftDir   = filepath.Join(wd, "raftDir")
+		raftPort  = 0
+		joinAddr  = ""
 	)
 
 	flag.BoolVar(&insecure, insecureParam, insecure, insecureUsage)
 	flag.BoolVar(&nostela, noStelaParam, nostela, nostelaUsage)
+	flag.StringVar(&stelaAddr, stelaAddrParam, stelaAddr, stelaAddrUsage)
 	flag.StringVar(&certPath, certPathParam, certPath, certPathUsage)
 	flag.StringVar(&keyPath, keyPathParam, keyPath, keyPathUsage)
 	flag.IntVar(&raftPort, raftPortParam, raftPort, raftPortUsage)
@@ -122,7 +126,7 @@ func run() (status int) {
 	if nostela == false {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 		defer cancelFunc()
-		client, err = stela_api.NewClient(ctx, stela.DefaultStelaAddress, certPath)
+		client, err = stela_api.NewClient(ctx, stelaAddr, certPath)
 		if err != nil {
 			logger.Error("Failed to obtain stela client.", "error", err.Error())
 			os.Exit(1)
