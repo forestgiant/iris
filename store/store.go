@@ -114,7 +114,7 @@ func (s *Store) Open(enableSingle bool) error {
 // Set the value for the given source and key in storage
 func (s *Store) Set(source string, key string, value []byte) error {
 	if s.raft.State() != raft.Leader {
-		return errors.New("Set should be only called on the leader")
+		return errors.New("Set should only be called on the leader")
 	}
 
 	c := &command{Operation: operationSet, Source: source, Key: key, Value: value}
@@ -164,7 +164,7 @@ func (s *Store) Get(source string, key string) ([]byte, error) {
 // DeleteKey deletes the key and value for the given source in storage
 func (s *Store) DeleteKey(source string, key string) error {
 	if s.raft.State() != raft.Leader {
-		return errors.New("DeleteKey should be only called on the leader")
+		return errors.New("DeleteKey should only be called on the leader")
 	}
 
 	c := &command{Operation: operationDeleteKey, Source: source, Key: key}
@@ -178,7 +178,7 @@ func (s *Store) DeleteKey(source string, key string) error {
 // DeleteSource deletes the given source in storage
 func (s *Store) DeleteSource(source string) error {
 	if s.raft.State() != raft.Leader {
-		return errors.New("DeleteSource should be only called on the leader")
+		return errors.New("DeleteSource should only be called on the leader")
 	}
 
 	c := &command{Operation: operationDeleteSource, Source: source}
@@ -192,6 +192,10 @@ func (s *Store) DeleteSource(source string) error {
 // Join the node located at addr to this store.
 // The node must be ready to respond to raft communications
 func (s *Store) Join(addr string) error {
+	if s.raft.State() != raft.Leader {
+		return errors.New("Join should only be called on the leader")
+	}
+
 	s.logger.Info("Received join request for remote node", "address", addr)
 	f := s.raft.AddPeer(addr)
 	if f.Error() != nil {
