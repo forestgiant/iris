@@ -28,69 +28,94 @@ import (
 )
 
 const (
-	version         = "0.9.0"                //version represents the semantic version of this service/api
-	timeout         = 500 * time.Millisecond //default timeout for context objects
-	defaultRaftAddr = ":12000"
+	version           = "0.9.0"                //version represents the semantic version of this service/api
+	timeout           = 500 * time.Millisecond //default timeout for context objects
+	exitStatusSuccess = 0
+	exitStatusError   = 1
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() (status int) {
+	// Setup a logger to use
 	var logger = fglog.Logger{}.With("time", fglog.DefaultTimestamp, "caller", fglog.DefaultCaller, "service", "iris")
 
-	// Set up semantic versioning
+	// Setup semantic versioning
 	if err := semver.SetVersion(version); err != nil {
 		logger.Error("Unable to set semantic version.", "error", err.Error())
-		os.Exit(1)
+		return exitStatusError
 	}
 
 	// Prepare default path values
 	wd, err := os.Getwd()
 	if err != nil {
 		logger.Error("unable to get current working directory", "error", err)
+		return exitStatusError
 	}
 
-	var (
+	// Define and parse our command line flags
+	const (
+		insecureParam    = "insecure"
 		insecureUsage    = "Disable SSL, allowing unenecrypted communication with this service."
-		insecure         = false
+		noStelaParam     = "nostela"
 		nostelaUsage     = "Disable automatic stela registration."
-		nostela          bool
+		certPathParam    = "cert"
 		certPathUsage    = "Path to the certificate file for the server."
-		certPath         = filepath.Join(wd, "server.cer")
+		keyPathParam     = "key"
 		keyPathUsage     = "Path to the private key file for the server."
-		keyPath          = filepath.Join(wd, "server.key")
+		raftDirParam     = "raftdir"
 		raftDirUsage     = "Directory used to store raft data."
-		raftDir          = filepath.Join(wd, "raftDir")
-		raftAddressUsage = "Bind address used for the raft consensus mechanism."
-		raftAddr         string
-		joinAddressUsage = "Join address, if any, used for the raft consensus mechanism."
-		joinAddr         string
+		raftPortParam    = "raft"
+		raftPortUsage    = "Port used for raft communications."
+		joinAddrParam    = "join"
+		joinAddressUsage = "Address of the raft cluster you would like to join."
 	)
 
-	// Retrieve command line flags
-	flag.BoolVar(&insecure, "insecure", insecure, insecureUsage)
-	flag.BoolVar(&nostela, "nostela", nostela, nostelaUsage)
-	flag.StringVar(&certPath, "cert", certPath, certPathUsage)
-	flag.StringVar(&keyPath, "key", keyPath, keyPathUsage)
-	flag.StringVar(&raftAddr, "raftAddr", defaultRaftAddr, raftAddressUsage)
-	flag.StringVar(&joinAddr, "joinAddr", joinAddr, joinAddressUsage)
-	flag.StringVar(&raftDir, "raftDir", raftDir, raftDirUsage)
+	var (
+		insecure = false
+		nostela  = false
+		certPath = filepath.Join(wd, "server.cer")
+		keyPath  = filepath.Join(wd, "server.key")
+		raftDir  = filepath.Join(wd, "raftDir")
+		raftPort = 0
+		joinAddr = ""
+	)
+
+	flag.BoolVar(&insecure, insecureParam, insecure, insecureUsage)
+	flag.BoolVar(&nostela, noStelaParam, nostela, nostelaUsage)
+	flag.StringVar(&certPath, certPathParam, certPath, certPathUsage)
+	flag.StringVar(&keyPath, keyPathParam, keyPath, keyPathUsage)
+	flag.IntVar(&raftPort, raftPortParam, raftPort, raftPortUsage)
+	flag.StringVar(&raftDir, raftDirParam, raftDir, raftDirUsage)
+	flag.StringVar(&joinAddr, joinAddrParam, joinAddr, joinAddressUsage)
 	flag.Parse()
 
-	if !insecure {
-		if len(certPath) == 0 {
-			logger.Error("you must provide the path to an SSL certificate used to encrypt communications with this service")
-			os.Exit(1)
-		}
+	logger = logger.With("stela", !nostela, "secured", !insecure)
 
-		if len(keyPath) == 0 {
-			logger.Error("you must provide the path to an SSL private key used to encrypt communications with this service")
-			os.Exit(1)
-		}
+	// Validate authentication inputs
+	if !insecure && len(certPath) == 0 {
+		logger.Error("you must provide the path to an SSL certificate used to encrypt communications with this service")
+		return exitStatusError
 	}
 
-	if len(raftAddr) == 0 {
-		logger.Error("You must provide the bind address to use for the raft communication.")
-		os.Exit(1)
+	if !insecure && len(keyPath) == 0 {
+		logger.Error("you must provide the path to an SSL private key used to encrypt communications with this service")
+		return exitStatusError
 	}
+
+	// Determine raft communication port
+	if raftPort == 0 {
+		p, err := portutil.GetUniqueTCP()
+		if err != nil {
+			logger.Error("Unable to obtain open port for raft communication.", err)
+			return exitStatusError
+		}
+		raftPort = p
+	}
+	raftAddress := fmt.Sprintf(":%d", raftPort)
+	logger = logger.With("raftAddress", raftAddress)
 
 	// Obtain our stela client
 	var client *stela_api.Client
@@ -109,6 +134,7 @@ func main() {
 	if len(joinAddr) > 0 {
 		enableSingleMode = false
 	} else if nostela == false {
+		//Check for peer to join
 		discoverCtx, cancelDiscover := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancelDiscover()
 		services, err := client.Discover(discoverCtx, iris.DefaultServiceName)
@@ -122,13 +148,16 @@ func main() {
 			joinAddr = services[0].IPv4Address()
 		}
 	}
-	logger.Info("Single mode determined", "enableSingleMode", enableSingleMode, "joining", joinAddr)
 
-	// Obtain an available port
+	if enableSingleMode == false {
+		logger = logger.With(joinAddrParam, joinAddr)
+	}
+
+	// Obtain an available port for grpc service communications
 	port, err := portutil.GetUniqueTCP()
 	if err != nil {
-		logger.Error("unable to obtain open port", err)
-		os.Exit(1)
+		logger.Error("unable to obtain open port for grpc communications.", err)
+		return exitStatusError
 	}
 	logger = logger.With("port", port)
 
@@ -142,7 +171,7 @@ func main() {
 		defer cancelRegister()
 		if err := client.RegisterService(registerCtx, service); err != nil {
 			logger.Error("Failed to register service.", "error", err.Error())
-			os.Exit(1)
+			return exitStatusError
 		}
 	}
 	errchan := make(chan error)
@@ -174,20 +203,20 @@ func main() {
 		creds, err := credentials.NewServerTLSFromFile(certPath, keyPath)
 		if err != nil {
 			logger.Error("Failed to generate credentials.", "error", err)
-			os.Exit(1)
+			return exitStatusError
 		}
 		opts = append(opts, grpc.Creds(creds))
 	}
 
-	logger.Info("Opening data store.")
-	var store = store.NewStore(raftAddr, raftDir, logger)
+	// Setup our data store
+	var store = store.NewStore(fmt.Sprintf(":%d", raftPort), raftDir, logger)
 	if err := store.Open(enableSingleMode); err != nil {
 		logger.Error("Failed to open data store.", "error", err)
-		os.Exit(1)
+		return exitStatusError
 	}
 
 	go func() {
-		logger.Info("Starting iris", "port", service.Port, "stela", !nostela, "secured", !insecure)
+		logger.Info("Starting iris")
 		grpcServer := grpc.NewServer(opts...)
 		server := &transport.Server{
 			Store: store,
@@ -199,20 +228,23 @@ func main() {
 	if enableSingleMode == false {
 		// If join was specified, make the join request.
 		go func() {
+			//TODO: Lets not do this sleep business
 			time.Sleep(3 * time.Second)
 			if joinAddr != "" {
-				logger.Info("Joining raft node", "joinAddr", joinAddr, "raftAddr", raftAddr)
-				if err := join(joinAddr, raftAddr); err != nil {
-					logger.Error("Failed to join raft node", "joinAddr", joinAddr, "raftAddr", raftAddr, "error", err.Error())
-					os.Exit(1)
+				logger.Info("Joining raft node")
+				if err := join(joinAddr, raftAddress); err != nil {
+					logger.Error("Failed to join raft node", "error", err.Error())
+					errchan <- err
 				}
 			}
 		}()
 	}
 
 	logger.Error("exiting", "error", (<-errchan).Error())
+	return exitStatusError
 }
 
+// join the specified raft cluster
 func join(joinAddr, raftAddr string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
