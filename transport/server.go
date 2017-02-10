@@ -25,11 +25,7 @@ type Session struct {
 
 // Server implements the generated pb.IrisServer interface
 type Server struct {
-	Store *store.Store //data storage using raft consensus mechanisms
-
-	// SourceFactory SourceFactory //factory method for creating sources
-	// sources         map[string]iris.Source           //collection of sources accessed by identifier
-	// sourcesMutex    *sync.Mutex                      //used when managing our collection of sources
+	Store           *store.Store                     //data storage using raft consensus mechanisms
 	initialized     bool                             //indicates whether Init has been called
 	sessions        map[string]*Session              //collection of sessions
 	sessionsMutex   *sync.Mutex                      //used to lock the sessions collection
@@ -53,6 +49,7 @@ func (s *Server) initialize() {
 
 // Join the node reachable at the provided address to this cluster
 func (s *Server) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
+
 	s.initialize()
 
 	if err := s.Store.Join(req.Address); err != nil {
