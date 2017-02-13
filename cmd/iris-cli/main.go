@@ -94,15 +94,15 @@ func run() (status int) {
 	flag.StringVar(&value, valueParam, value, valueUsage)
 	flag.Parse(os.Args[2:])
 
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer cancel()
-	stelaclient, err := stela_api.NewClient(ctx, stela.DefaultStelaAddress, "")
-	if err != nil {
-		logger.Error("Failed to obtain stela client.", "error", err.Error())
-		return exitStatusError
-	}
-
 	if len(addr) == 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		defer cancel()
+		stelaclient, err := stela_api.NewClient(ctx, stela.DefaultStelaAddress, "")
+		if err != nil {
+			logger.Error("Failed to obtain stela client.", "error", err.Error())
+			return exitStatusError
+		}
+
 		discoverCtx, cancelDiscover := context.WithTimeout(context.Background(), 200*time.Millisecond)
 		defer cancelDiscover()
 		service, err := stelaclient.DiscoverOne(discoverCtx, iris.DefaultServiceName)
