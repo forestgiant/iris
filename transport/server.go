@@ -47,10 +47,29 @@ func (s *Server) initialize() {
 	s.keySubsMutex = &sync.Mutex{}
 }
 
+// IsLeader indicates whether this instance is the leader of the cluster
+func (s *Server) IsLeader() bool {
+	if s.Store == nil {
+		return false
+	}
+	return s.Store.IsLeader()
+}
+
+// Leader returns the address of the cluster leader
+func (s *Server) Leader() string {
+	if s.Store == nil {
+		return ""
+	}
+	return s.Store.Leader()
+}
+
 // Join the node reachable at the provided address to this cluster
 func (s *Server) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
-
 	s.initialize()
+
+	if !s.IsLeader() {
+		return proxyJoin(ctx, req, s.Leader())
+	}
 
 	if err := s.Store.Join(req.Address); err != nil {
 		return nil, err
@@ -130,8 +149,12 @@ func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) e
 }
 
 // SetValue sets the value for the specified source and key
-func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetValueResponse, error) {
+func (s *Server) SetValue(ctx context.Context, req *pb.SetValueRequest) (*pb.SetValueResponse, error) {
 	s.initialize()
+
+	if !s.IsLeader() {
+		return proxySetValue(ctx, req, s.Leader())
+	}
 
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the source you would like to set a value for")
@@ -154,8 +177,12 @@ func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetVa
 }
 
 // GetValue expects a source and key and responds with the associated value
-func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
+func (s *Server) GetValue(ctx context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
 	s.initialize()
+
+	if !s.IsLeader() {
+		return proxyGetValue(ctx, req, s.Leader())
+	}
 
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the source you would like to get a value for")
@@ -179,6 +206,10 @@ func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetVa
 func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*pb.RemoveValueResponse, error) {
 	s.initialize()
 
+	if !s.IsLeader() {
+		return proxyRemoveValue(ctx, req, s.Leader())
+	}
+
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")
 	}
@@ -201,6 +232,10 @@ func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*
 // RemoveSource removes the specified source and all of its contents
 func (s *Server) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest) (*pb.RemoveSourceResponse, error) {
 	s.initialize()
+
+	if !s.IsLeader() {
+		return proxyRemoveSource(ctx, req, s.Leader())
+	}
 
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")

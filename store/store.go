@@ -57,8 +57,8 @@ func NewStore(raftBindAddr, raftDir string, logger fglog.Logger) *Store {
 	}
 }
 
-// Open the store.  If enableSingle is set, and there are no existing peers, this first node becomes the leader of the cluster
-func (s *Store) Open(enableSingle bool) error {
+// Open the store.  If startAsLeader is set, and there are no existing peers, this first node becomes the leader of the cluster
+func (s *Store) Open(startAsLeader bool) error {
 	// Setup raft configuration
 	config := raft.DefaultConfig()
 
@@ -83,10 +83,11 @@ func (s *Store) Open(enableSingle bool) error {
 	}
 
 	// Enable single mode if the option is set and this is the first node
-	if enableSingle && len(peers) == 0 {
+	if startAsLeader && len(peers) == 0 {
 		s.logger.Info("Enabling single mode.")
-		config.EnableSingleNode = true
-		config.DisableBootstrapAfterElect = false
+		config.StartAsLeader = true
+		// config.EnableSingleNode = true
+		// config.DisableBootstrapAfterElect = false
 	}
 
 	// Create the snapshot store. This allows raft to truncate the log.
@@ -109,6 +110,22 @@ func (s *Store) Open(enableSingle bool) error {
 
 	s.raft = r
 	return nil
+}
+
+// IsLeader indicates whether this store is currently the leader of the cluster
+func (s *Store) IsLeader() bool {
+	if s.raft == nil {
+		return false
+	}
+	return s.raft.State() == raft.Leader
+}
+
+// Leader returns the address of the cluster leader, or an empty string if unknown
+func (s *Store) Leader() string {
+	if s.raft == nil {
+		return ""
+	}
+	return s.raft.Leader()
 }
 
 // Set the value for the given source and key in storage

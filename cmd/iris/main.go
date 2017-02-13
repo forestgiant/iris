@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -118,8 +119,6 @@ func run() (status int) {
 		}
 		raftPort = p
 	}
-	raftAddress := fmt.Sprintf(":%d", raftPort)
-	logger = logger.With("raftAddress", raftAddress)
 
 	// Obtain our stela client
 	var client *stela_api.Client
@@ -134,9 +133,9 @@ func run() (status int) {
 	}
 
 	// Determine if we should join an existing raft network
-	enableSingleMode := true
+	startAsLeader := true
 	if len(joinAddr) > 0 {
-		enableSingleMode = false
+		startAsLeader = false
 	} else if nostela == false {
 		//Check for peer to join
 		discoverCtx, cancelDiscover := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -148,28 +147,22 @@ func run() (status int) {
 		}
 
 		if len(services) > 0 {
-			enableSingleMode = false
+			startAsLeader = false
 			joinAddr = services[0].IPv4Address()
 		}
 	}
 
-	if enableSingleMode == false {
+	if startAsLeader == false {
 		logger = logger.With(joinAddrParam, joinAddr)
 	}
 
-	// Obtain an available port for grpc service communications
-	port, err := portutil.GetUniqueTCP()
-	if err != nil {
-		logger.Error("unable to obtain open port for grpc communications.", err)
-		return exitStatusError
-	}
-	logger = logger.With("port", port)
-
-	// Register service with Stela api
+	grpcPort := raftPort + 1
 	service := &stela.Service{
 		Name: iris.DefaultServiceName,
-		Port: int32(port),
+		Port: int32(grpcPort),
 	}
+
+	// Register service with Stela api
 	if !nostela {
 		registerCtx, cancelRegister := context.WithTimeout(context.Background(), timeout)
 		defer cancelRegister()
@@ -196,6 +189,16 @@ func run() (status int) {
 		errchan <- fmt.Errorf("%s", sig)
 	}(client, service)
 
+	// Determine grpc and raft addr
+	host, _, err := net.SplitHostPort(service.IPv4Address())
+	if err != nil {
+		logger.Error("Unable to determine grpc address.", err)
+		return exitStatusError
+	}
+	raftAddr := net.JoinHostPort(host, strconv.Itoa(raftPort))
+	grpcAddr := net.JoinHostPort(host, strconv.Itoa(grpcPort))
+	logger = logger.With("raftAddr", raftAddr, "grpcAddr", grpcAddr)
+
 	// Serve our remote procedures
 	l, err := net.Listen("tcp", service.IPv4Address())
 	if err != nil {
@@ -213,8 +216,8 @@ func run() (status int) {
 	}
 
 	// Setup our data store
-	var store = store.NewStore(fmt.Sprintf(":%d", raftPort), raftDir, logger)
-	if err := store.Open(enableSingleMode); err != nil {
+	var store = store.NewStore(raftAddr, raftDir, logger)
+	if err := store.Open(startAsLeader); err != nil {
 		logger.Error("Failed to open data store.", "error", err)
 		return exitStatusError
 	}
@@ -229,14 +232,14 @@ func run() (status int) {
 		errchan <- grpcServer.Serve(l)
 	}()
 
-	if enableSingleMode == false {
+	if startAsLeader == false {
 		// If join was specified, make the join request.
 		go func() {
 			//TODO: Lets not do this sleep business
 			time.Sleep(3 * time.Second)
 			if joinAddr != "" {
 				logger.Info("Joining raft node")
-				if err := join(joinAddr, raftAddress); err != nil {
+				if err := join(joinAddr, raftAddr); err != nil {
 					logger.Error("Failed to join raft node", "error", err.Error())
 					errchan <- err
 				}
@@ -258,10 +261,7 @@ func join(joinAddr, raftAddr string) error {
 		return err
 	}
 
-	joinCtx, cancelJoin := context.WithTimeout(context.Background(), 500*time.Millisecond)
-	defer cancelJoin()
-
-	if err := client.Join(joinCtx, raftAddr); err != nil {
+	if err := client.Join(ctx, raftAddr); err != nil {
 		return err
 	}
 
