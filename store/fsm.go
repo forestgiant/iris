@@ -38,6 +38,7 @@ func (f *fsm) applySet(source string, key string, value []byte) interface{} {
 	}
 	f.storage[source][key] = value
 	f.logger.Info("SET", "source", source, "key", key, "value", value)
+	go f.publishCallback(source, key, value)
 
 	return nil
 }
@@ -46,7 +47,12 @@ func (f *fsm) appleDeleteSource(source string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.logger.Info("DELETE", "source")
-	delete(f.storage, source)
+	if m, ok := f.storage[source]; ok {
+		for k, v := range m {
+			go f.publishCallback(source, k, v)
+		}
+		delete(f.storage, source)
+	}
 	return nil
 }
 
@@ -55,9 +61,10 @@ func (f *fsm) appleDeleteKey(source string, key string) interface{} {
 	defer f.mu.Unlock()
 
 	f.logger.Info("DELETE", "source", source, "key", key)
-	if f.storage[source] != nil {
-		delete(f.storage[source], key)
-		if len(f.storage[source]) == 0 {
+	if m, ok := f.storage[source]; ok {
+		delete(m, key)
+		go f.publishCallback(source, key, []byte{})
+		if len(m) == 0 {
 			delete(f.storage, source)
 		}
 	}
@@ -90,6 +97,12 @@ func (f *fsm) Restore(rc io.ReadCloser) error {
 	// No lock required according to Hashicorp docs
 	f.storage = s
 	return nil
+}
+
+func (f *fsm) publishCallback(source string, key string, value []byte) {
+	if f.PublishCallback != nil {
+		go f.PublishCallback(source, key, value)
+	}
 }
 
 type fsmSnapshot struct {

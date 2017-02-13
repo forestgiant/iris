@@ -351,7 +351,6 @@ func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, 
 		var thecopy []*UpdateHandler
 		copy(thecopy, c.keyHandlers[source][key])
 		c.keyHandlers[source][key] = removeHandler(handler, thecopy)
-		// c.keyHandlers[source][key] = removeHandler(&handler, c.keyHandlers[source][key])
 	}
 
 	return c.rpc.UnsubscribeKey(ctx, &pb.UnsubscribeKeyRequest{

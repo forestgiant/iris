@@ -1,4 +1,4 @@
-package api
+package api_test
 
 import (
 	"context"
@@ -16,16 +16,23 @@ import (
 
 	fglog "github.com/forestgiant/log"
 	"gitlab.fg/otis/iris"
+	"gitlab.fg/otis/iris/api"
 	"gitlab.fg/otis/iris/pb"
 	"gitlab.fg/otis/iris/store"
 	"gitlab.fg/otis/iris/transport"
 )
 
-var testClient *Client
+var testClient *api.Client
 var testServiceAddress string
 
 const testColorsSource = "com.forestgiant.iris.testing.colors"
 const testSoundsSource = "com.forestgiant.iris.testing.sounds"
+
+type SuppressedWriter struct{}
+
+func (w *SuppressedWriter) Write(p []byte) (n int, err error) {
+	return 0, nil
+}
 
 func TestMain(m *testing.M) {
 	wd, err := os.Getwd()
@@ -48,7 +55,7 @@ func TestMain(m *testing.M) {
 	}
 
 	testRaftDir := filepath.Join(wd, "com.forestgiant.iris.testing.client.raftDir")
-	var store = store.NewStore(":12000", testRaftDir, fglog.Logger{})
+	var store = store.NewStore(":12000", testRaftDir, fglog.Logger{Writer: &SuppressedWriter{}})
 	if err := store.Open(true); err != nil {
 		fmt.Println("Failed to open data store.", err)
 		//TODO: Find a way to defer this call (another call below as well)
@@ -73,7 +80,7 @@ func TestMain(m *testing.M) {
 	go func() {
 		clientCtx, cancelClient := context.WithTimeout(context.Background(), 500*time.Millisecond)
 		defer cancelClient()
-		testClient, err = NewClient(clientCtx, testServiceAddress, nil)
+		testClient, err = api.NewClient(clientCtx, testServiceAddress, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -123,7 +130,7 @@ func TestNewClient(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		c, err := NewClient(ctx, test.Address, nil)
+		c, err := api.NewClient(ctx, test.Address, nil)
 		if c != nil {
 			if err := c.Close(); err != nil {
 				t.Error(err)
@@ -232,7 +239,6 @@ func TestSettersAndGetters(t *testing.T) {
 }
 
 func TestSubscriptions(t *testing.T) {
-
 	t.Run("TestSourceSubscriptions", func(t *testing.T) {
 		deleteTestSources()
 
@@ -249,8 +255,9 @@ func TestSubscriptions(t *testing.T) {
 		}
 
 		wg := &sync.WaitGroup{}
+		testFinished := make(chan struct{})
 
-		var sourceSubCallback UpdateHandler = func(u *pb.Update) error {
+		var sourceSubCallback api.UpdateHandler = func(u *pb.Update) error {
 			if u.Source != testColorsSource {
 				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
 			} else {
@@ -259,32 +266,43 @@ func TestSubscriptions(t *testing.T) {
 			return nil
 		}
 
-		sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
-		defer cancelSourceSub()
-		_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		for _, test := range tests {
-			setCtx, cancelSet := context.WithCancel(context.Background())
-			defer cancelSet()
-
-			if test.Source == testColorsSource {
-				wg.Add(1)
-			}
-			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
-				t.Error("Failed to set test value")
+		go func() {
+			sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
+			defer cancelSourceSub()
+			_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
+			if err != nil {
+				t.Error(err)
 				return
 			}
-		}
 
-		wg.Wait()
+			for _, test := range tests {
+				setCtx, cancelSet := context.WithCancel(context.Background())
+				defer cancelSet()
+
+				if test.Source == testColorsSource {
+					wg.Add(1)
+				}
+				if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+					t.Error("Failed to set test value")
+					return
+				}
+			}
+
+			wg.Wait()
+			close(testFinished)
+		}()
+
+		select {
+		case <-testFinished:
+			fmt.Println("Test Finished")
+		case <-time.After(5 * time.Second):
+			fmt.Println("Test failed")
+			t.Error("Subscriptions took too long to respond.")
+		}
 
 		sourceUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
 		defer cancelUnsubSource()
-		_, err = testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
+		_, err := testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
 		if err != nil {
 			t.Error(err)
 			return
@@ -308,8 +326,9 @@ func TestSubscriptions(t *testing.T) {
 		}
 
 		wg := &sync.WaitGroup{}
+		testFinished := make(chan struct{})
 
-		var keySubCallback UpdateHandler = func(u *pb.Update) error {
+		var keySubCallback api.UpdateHandler = func(u *pb.Update) error {
 			if u.Source == testColorsSource && u.Key == testKey {
 				wg.Done()
 			} else {
@@ -318,55 +337,47 @@ func TestSubscriptions(t *testing.T) {
 			return nil
 		}
 
-		keySubCtx, cancelKeySub := context.WithCancel(context.Background())
-		defer cancelKeySub()
-		_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-
-		for _, test := range tests {
-			setCtx, cancelSet := context.WithCancel(context.Background())
-			defer cancelSet()
-
-			if test.Source == testColorsSource && test.Key == testKey {
-				wg.Add(1)
-			}
-
-			if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
-				t.Error("Failed to set test value")
+		go func() {
+			keySubCtx, cancelKeySub := context.WithCancel(context.Background())
+			defer cancelKeySub()
+			_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
+			if err != nil {
+				t.Error(err)
 				return
 			}
-		}
 
-		wg.Wait()
+			for _, test := range tests {
+				setCtx, cancelSet := context.WithCancel(context.Background())
+				defer cancelSet()
+
+				if test.Source == testColorsSource && test.Key == testKey {
+					wg.Add(1)
+				}
+
+				if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+					t.Error("Failed to set test value")
+					return
+				}
+			}
+
+			wg.Wait()
+			close(testFinished)
+		}()
+
+		select {
+		case <-testFinished:
+		case <-time.After(5 * time.Second):
+			t.Error("Subscriptions took too long to respond.")
+		}
 
 		keyUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
 		defer cancelUnsubSource()
-		_, err = testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
+		_, err := testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
 		if err != nil {
 			t.Error(err)
 			return
 		}
 	})
-}
-
-func TestRemoveHandler(t *testing.T) {
-	var handler1 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler1"); return nil }
-	var handler2 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler2"); return nil }
-	var handler3 UpdateHandler = func(u *pb.Update) error { fmt.Println("handler3"); return nil }
-	var handlers = []*UpdateHandler{&handler1, &handler2, &handler3}
-
-	count := len(handlers)
-	for i := 0; i < count; i++ {
-		handlers = removeHandler(handlers[len(handlers)-1], handlers)
-	}
-
-	if len(handlers) > 0 {
-		t.Error("Handlers array should have no handlers left after removal.  Found", count)
-		return
-	}
 }
 
 func TestRemoveSource(t *testing.T) {

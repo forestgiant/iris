@@ -45,6 +45,12 @@ func (s *Server) initialize() {
 	s.sessionsMutex = &sync.Mutex{}
 	s.sourceSubsMutex = &sync.Mutex{}
 	s.keySubsMutex = &sync.Mutex{}
+
+	if s.Store != nil {
+		s.Store.PublishCallback = func(source, key string, value []byte) {
+			s.publish(source, key, value)
+		}
+	}
 }
 
 // IsLeader indicates whether this instance is the leader of the cluster
@@ -168,8 +174,6 @@ func (s *Server) SetValue(ctx context.Context, req *pb.SetValueRequest) (*pb.Set
 	if err != nil {
 		return nil, err
 	}
-
-	go s.publish(req.Source, req.Key, req.Value)
 
 	return &pb.SetValueResponse{
 		Value: req.Value,

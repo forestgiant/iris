@@ -37,8 +37,9 @@ type kvs map[string][]byte
 
 // Store is a collection of key-value stores, where all changes are made via Raft consensus
 type Store struct {
-	RaftBindAddr string
-	RaftDir      string
+	RaftBindAddr    string
+	RaftDir         string
+	PublishCallback func(source, key string, value []byte)
 
 	raft   *raft.Raft
 	logger *fglog.Logger
