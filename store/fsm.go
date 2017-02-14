@@ -9,13 +9,51 @@ import (
 
 type fsm Store
 
-func (f *fsm) Apply(l *raft.Log) interface{} {
-	var c command
-	if err := json.Unmarshal(l.Data, &c); err != nil {
-		f.logger.Error("Failed to unmarshal command.", "error", err)
-		return nil
+func (f *fsm) set(source, key string, value []byte) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if f.storage[source] == nil {
+		f.storage[source] = make(kvs)
+	}
+	f.storage[source][key] = value
+}
+
+func (f *fsm) deleteSource(source string) []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	keys := []string{}
+	if m, ok := f.storage[source]; ok {
+		for k := range m {
+			keys = append(keys, k)
+		}
+		delete(f.storage, source)
 	}
 
+	return keys
+}
+
+func (f *fsm) deleteKey(source, key string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	var found = false
+	if m, ok := f.storage[source]; ok {
+		if _, ok := m[key]; ok {
+			found = true
+			delete(m, key)
+		}
+
+		if len(m) == 0 {
+			delete(f.storage, source)
+		}
+	}
+
+	return found
+}
+
+func (f *fsm) applyCommand(c command) interface{} {
 	switch c.Operation {
 	case operationSet:
 		return f.applySet(c.Source, c.Key, c.Value)
@@ -29,62 +67,56 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	}
 }
 
-func (f *fsm) applySet(source string, key string, value []byte) interface{} {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
-	if f.storage[source] == nil {
-		f.storage[source] = make(kvs)
+func (f *fsm) Apply(l *raft.Log) interface{} {
+	var c command
+	if err := json.Unmarshal(l.Data, &c); err != nil {
+		f.logger.Error("Failed to unmarshal command.", "error", err)
+		return nil
 	}
-	f.storage[source][key] = value
+
+	return f.applyCommand(c)
+}
+
+func (f *fsm) applySet(source string, key string, value []byte) interface{} {
 	f.logger.Info("SET", "source", source, "key", key, "value", value)
+	f.set(source, key, value)
 	go f.publishCallback(source, key, value)
 
 	return nil
 }
 
 func (f *fsm) appleDeleteSource(source string) interface{} {
-	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.logger.Info("DELETE", "source")
-	if m, ok := f.storage[source]; ok {
-		for k, v := range m {
-			go f.publishCallback(source, k, v)
-		}
-		delete(f.storage, source)
+	deletedKeys := f.deleteSource(source)
+	for _, k := range deletedKeys {
+		go f.publishCallback(source, k, nil)
 	}
 	return nil
 }
 
 func (f *fsm) appleDeleteKey(source string, key string) interface{} {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-
 	f.logger.Info("DELETE", "source", source, "key", key)
-	if m, ok := f.storage[source]; ok {
-		delete(m, key)
-		go f.publishCallback(source, key, []byte{})
-		if len(m) == 0 {
-			delete(f.storage, source)
+	if f.deleteKey(source, key) {
+		go f.publishCallback(source, key, nil)
+	}
+	return nil
+}
+
+func clone(o map[string]kvs) map[string]kvs {
+	clone := make(map[string]kvs)
+	for s, m := range o {
+		clone[s] = make(kvs)
+		for k, v := range m {
+			clone[s][k] = v
 		}
 	}
-
-	return nil
+	return clone
 }
 
 func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-
-	clone := make(map[string]kvs)
-	for s, m := range f.storage {
-		f.storage[s] = make(kvs)
-		for k, v := range m {
-			clone[s][k] = v
-		}
-	}
-
-	return &fsmSnapshot{store: clone}, nil
+	return &fsmSnapshot{store: clone(f.storage)}, nil
 }
 
 func (f *fsm) Restore(rc io.ReadCloser) error {
