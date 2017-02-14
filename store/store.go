@@ -131,7 +131,7 @@ func (s *Store) Leader() string {
 
 // Set the value for the given source and key in storage
 func (s *Store) Set(source string, key string, value []byte) error {
-	if s.raft.State() != raft.Leader {
+	if !s.IsLeader() {
 		return errors.New("Set should only be called on the leader")
 	}
 
@@ -169,19 +169,19 @@ func (s *Store) GetKeys(source string) ([]string, error) {
 }
 
 // Get the value for the given source and key in storage
-func (s *Store) Get(source string, key string) ([]byte, error) {
+func (s *Store) Get(source string, key string) []byte {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.storage[source] == nil {
-		return nil, nil
+		return nil
 	}
-	return s.storage[source][key], nil
+	return s.storage[source][key]
 }
 
 // DeleteKey deletes the key and value for the given source in storage
 func (s *Store) DeleteKey(source string, key string) error {
-	if s.raft.State() != raft.Leader {
+	if !s.IsLeader() {
 		return errors.New("DeleteKey should only be called on the leader")
 	}
 
@@ -195,7 +195,7 @@ func (s *Store) DeleteKey(source string, key string) error {
 
 // DeleteSource deletes the given source in storage
 func (s *Store) DeleteSource(source string) error {
-	if s.raft.State() != raft.Leader {
+	if !s.IsLeader() {
 		return errors.New("DeleteSource should only be called on the leader")
 	}
 
@@ -210,7 +210,7 @@ func (s *Store) DeleteSource(source string) error {
 // Join the node located at addr to this store.
 // The node must be ready to respond to raft communications
 func (s *Store) Join(addr string) error {
-	if s.raft.State() != raft.Leader {
+	if !s.IsLeader() {
 		return errors.New("Join should only be called on the leader")
 	}
 

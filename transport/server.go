@@ -196,10 +196,7 @@ func (s *Server) GetValue(ctx context.Context, req *pb.GetValueRequest) (*pb.Get
 		return nil, errors.New("You must provide the key for the value you would like to get")
 	}
 
-	value, err := s.Store.Get(req.Source, req.Key)
-	if err != nil {
-		return nil, err
-	}
+	value := s.Store.Get(req.Source, req.Key)
 
 	return &pb.GetValueResponse{
 		Value: value,
