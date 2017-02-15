@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -53,21 +52,14 @@ func run() (status int) {
 		return exitStatusError
 	}
 
-	// Prepare default path values
-	wd, err := os.Getwd()
-	if err != nil {
-		logger.Error("Unable to get current working directory.", "error", err.Error())
-		return exitStatusError
-	}
-
 	// Define our inputs
 	var (
 		insecure  = false
 		nostela   = false
 		stelaAddr = stela.DefaultStelaAddress
-		certPath  = filepath.Join(wd, "server.cer")
-		keyPath   = filepath.Join(wd, "server.key")
-		raftDir   = filepath.Join(wd, "raftDir")
+		certPath  = "server.cer"
+		keyPath   = "server.key"
+		raftDir   = "raftDir"
 		raftPort  = 0
 		joinAddr  = ""
 	)
@@ -81,6 +73,7 @@ func run() (status int) {
 
 	// Obtain our stela client
 	var client *stela_api.Client
+	var err error
 	if !nostela {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 		defer cancelFunc()
