@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/forestgiant/portutil"
 	"github.com/forestgiant/semver"
 	"gitlab.fg/go/stela"
 	"gitlab.fg/otis/iris"
@@ -222,15 +221,6 @@ func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, 
 
 	if !*insecure && len(*keyPath) == 0 {
 		return errors.New("You must provide the path to an SSL private key used to encrypt communications with this service")
-	}
-
-	// Determine raft communication port
-	if *port == 0 {
-		p, err := portutil.GetUniqueTCP()
-		if err != nil {
-			return fmt.Errorf("Unable to obtain open port for grpc communication. %s", err.Error())
-		}
-		*port = p
 	}
 
 	return nil
