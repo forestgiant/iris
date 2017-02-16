@@ -216,9 +216,15 @@ func (s *Store) Join(addr string) error {
 
 	s.logger.Info("Received join request for remote node", "address", addr)
 	f := s.raft.AddPeer(addr)
-	if f.Error() != nil {
-		return f.Error()
+	if err := f.Error(); err != nil {
+		if err == raft.ErrKnownPeer {
+			s.logger.Info("Joining node is a known peer in this cluster", "address", addr)
+			return nil
+		}
+
+		return err
 	}
+
 	s.logger.Info("Node successfully joined", "address", addr)
 	return nil
 }

@@ -60,12 +60,12 @@ func run() (status int) {
 		certPath  = "server.cer"
 		keyPath   = "server.key"
 		raftDir   = "raftDir"
-		raftPort  = 0
+		port      = iris.DefaultServicePort
 		joinAddr  = ""
 	)
 
 	// Parse, prepare, and validate inputs
-	if err := prepareInputs(&insecure, &nostela, &stelaAddr, &certPath, &keyPath, &raftDir, &raftPort, &joinAddr); err != nil {
+	if err := prepareInputs(&port, &insecure, &nostela, &stelaAddr, &certPath, &keyPath, &raftDir, &joinAddr); err != nil {
 		logger.Error("Error parsing inputs.", "error", err.Error())
 		return exitStatusError
 	}
@@ -86,10 +86,10 @@ func run() (status int) {
 	}
 
 	// Set up our grpc service parameters
-	grpcPort := raftPort + 1
+	raftPort := port + 1
 	service := &stela.Service{
 		Name: iris.DefaultServiceName,
-		Port: int32(grpcPort),
+		Port: int32(port),
 	}
 
 	// Determine join address before registering our service
@@ -124,8 +124,8 @@ func run() (status int) {
 		logger.Error("Unable to determine grpc address.", err)
 		return exitStatusError
 	}
+	grpcAddr := net.JoinHostPort(host, strconv.Itoa(port))
 	raftAddr := net.JoinHostPort(host, strconv.Itoa(raftPort))
-	grpcAddr := net.JoinHostPort(host, strconv.Itoa(grpcPort))
 	logger = logger.With("raftAddr", raftAddr, "grpcAddr", grpcAddr)
 
 	// Setup our data store
@@ -203,14 +203,14 @@ func fetchJoinAddress(client *stela_api.Client) (string, error) {
 	return services[0].IPv4Address(), nil
 }
 
-func prepareInputs(insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, raftDir *string, raftPort *int, joinAddr *string) error {
+func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, raftDir *string, joinAddr *string) error {
 	// Parse command line flags
 	flag.BoolVar(insecure, "insecure", *insecure, "Disable SSL, allowing unenecrypted communication with this service.")
 	flag.BoolVar(nostela, "nostela", *nostela, "Disable automatic stela registration.")
 	flag.StringVar(stelaAddr, "stela", *stelaAddr, "Address of the stela service you would like to use for discovery")
 	flag.StringVar(certPath, "cert", *certPath, "Path to the certificate file for the server.")
 	flag.StringVar(keyPath, "key", *keyPath, "Path to the private key file for the server.")
-	flag.IntVar(raftPort, "raft", *raftPort, "Port used for raft communications.")
+	flag.IntVar(port, "port", *port, "Port used for grpc communications.")
 	flag.StringVar(raftDir, "raftdir", *raftDir, "Directory used to store raft data.")
 	flag.StringVar(joinAddr, "join", *joinAddr, "Address of the raft cluster leader you would like to join.")
 	flag.Parse()
@@ -225,12 +225,12 @@ func prepareInputs(insecure *bool, nostela *bool, stelaAddr *string, certPath *s
 	}
 
 	// Determine raft communication port
-	if *raftPort == 0 {
+	if *port == 0 {
 		p, err := portutil.GetUniqueTCP()
 		if err != nil {
-			return fmt.Errorf("Unable to obtain open port for raft communication. %s", err.Error())
+			return fmt.Errorf("Unable to obtain open port for grpc communication. %s", err.Error())
 		}
-		*raftPort = p
+		*port = p
 	}
 
 	return nil

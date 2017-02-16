@@ -18,7 +18,7 @@ func getProxyAddress(leaderRaftAddr string) string {
 	if err != nil {
 		return ""
 	}
-	return net.JoinHostPort(host, strconv.Itoa(p+1))
+	return net.JoinHostPort(host, strconv.Itoa(p-1))
 }
 
 func proxyJoin(ctx context.Context, req *pb.JoinRequest, addr string) (*pb.JoinResponse, error) {

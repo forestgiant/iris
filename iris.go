@@ -2,23 +2,16 @@ package iris
 
 import "encoding/json"
 
-//DefaultServiceName for the iris service
-const DefaultServiceName = "iris.service.fg"
+const (
+	//DefaultServicePort for the iris service
+	DefaultServicePort = 32000
 
-//DefaultIdentifier is the default identifier for sources to use in their implementations
-var DefaultIdentifier = "default"
+	//DefaultServiceName for the iris service
+	DefaultServiceName = "iris.service.fg"
 
-//Source is an interface describing the ability to store and retrieve data
-// type Source interface {
-// 	ID() string
-// 	Set(key string, value []byte) error
-// 	SetKeyValuePair(kvp KeyValuePair) error
-// 	Get(key string) (value []byte, err error)
-// 	GetKeyValuePair(key string) (KeyValuePair, error)
-// 	Remove(key string) error
-// 	RemoveKeyValuePair(kvp KeyValuePair) error
-// 	GetKeys() ([]string, error)
-// }
+	//DefaultIdentifier is the default identifier for sources to use in their implementations
+	DefaultIdentifier = "default"
+)
 
 // Marshaller comment
 type Marshaller interface {
