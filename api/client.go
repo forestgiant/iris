@@ -52,10 +52,10 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 
 	c.rpc = pb.NewIrisClient(c.conn)
 	resp, err := c.rpc.Connect(ctx, &pb.ConnectRequest{})
-	c.session = resp.Session
 	if err != nil {
 		return c, err
 	}
+	c.session = resp.Session
 
 	if err := c.listen(context.Background()); err != nil {
 		return nil, err
@@ -93,6 +93,14 @@ func (c *Client) initialize() {
 	c.initialized = true
 	c.sourceHandlersMutex = &sync.Mutex{}
 	c.keyHandlersMutex = &sync.Mutex{}
+}
+
+//Join the node reachable at the address to this cluster
+func (c *Client) Join(ctx context.Context, address string) error {
+	if _, err := c.rpc.Join(ctx, &pb.JoinRequest{Address: address}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Close tears down the client's underlying connections
@@ -236,6 +244,11 @@ func (c *Client) GetValue(ctx context.Context, source string, key string) ([]byt
 		Source:  source,
 		Key:     key,
 	})
+
+	if resp == nil {
+		return nil, err
+	}
+
 	return resp.Value, err
 }
 
@@ -338,7 +351,6 @@ func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, 
 		var thecopy []*UpdateHandler
 		copy(thecopy, c.keyHandlers[source][key])
 		c.keyHandlers[source][key] = removeHandler(handler, thecopy)
-		// c.keyHandlers[source][key] = removeHandler(&handler, c.keyHandlers[source][key])
 	}
 
 	return c.rpc.UnsubscribeKey(ctx, &pb.UnsubscribeKeyRequest{

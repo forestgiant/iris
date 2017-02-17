@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.fg/otis/iris"
-	"gitlab.fg/otis/iris/mapsource"
 	"gitlab.fg/otis/iris/pb"
+	"gitlab.fg/otis/iris/store"
 	"golang.org/x/net/context"
 )
 
 // SourceFactory describes a method that returns a new source with the provided identifier
-type SourceFactory func(identifier string) iris.Source
+// type SourceFactory func(identifier string) iris.Source
 
 // SessionMap is a map used to efficiently store and search for sessions
 type SessionMap map[string]struct{}
@@ -26,10 +25,8 @@ type Session struct {
 
 // Server implements the generated pb.IrisServer interface
 type Server struct {
+	Store           *store.Store                     //data storage using raft consensus mechanisms
 	initialized     bool                             //indicates whether Init has been called
-	SourceFactory   SourceFactory                    //factory method for creating sources
-	sources         map[string]iris.Source           //collection of sources accessed by identifier
-	sourcesMutex    *sync.Mutex                      //used when managing our collection of sources
 	sessions        map[string]*Session              //collection of sessions
 	sessionsMutex   *sync.Mutex                      //used to lock the sessions collection
 	sourceSubs      map[string]SessionMap            //collection of sessions subscribed to sources
@@ -45,10 +42,46 @@ func (s *Server) initialize() {
 	}
 
 	s.initialized = true
-	s.sourcesMutex = &sync.Mutex{}
 	s.sessionsMutex = &sync.Mutex{}
 	s.sourceSubsMutex = &sync.Mutex{}
 	s.keySubsMutex = &sync.Mutex{}
+
+	if s.Store != nil {
+		s.Store.PublishCallback = func(source, key string, value []byte) {
+			s.publish(source, key, value)
+		}
+	}
+}
+
+// IsLeader indicates whether this instance is the leader of the cluster
+func (s *Server) IsLeader() bool {
+	if s.Store == nil {
+		return false
+	}
+	return s.Store.IsLeader()
+}
+
+// Leader returns the address of the cluster leader
+func (s *Server) Leader() string {
+	if s.Store == nil {
+		return ""
+	}
+	return s.Store.Leader()
+}
+
+// Join the node reachable at the provided address to this cluster
+func (s *Server) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
+	s.initialize()
+
+	if !s.IsLeader() {
+		return proxyJoin(ctx, req, s.Leader())
+	}
+
+	if err := s.Store.Join(req.Address); err != nil {
+		return nil, err
+	}
+
+	return &pb.JoinResponse{}, nil
 }
 
 // Connect responds with a stream of objects representing source, key, value updates
@@ -86,14 +119,17 @@ func (s *Server) Listen(req *pb.ListenRequest, stream pb.Iris_ListenServer) erro
 func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.Iris_GetSourcesServer) error {
 	s.initialize()
 
-	s.sourcesMutex.Lock()
-	defer s.sourcesMutex.Unlock()
+	sources, err := s.Store.GetSources()
+	if err != nil {
+		return nil
+	}
 
-	for source := range s.sources {
-		if err := stream.Send(&pb.GetSourcesResponse{Source: source}); err != nil {
+	for _, s := range sources {
+		if err := stream.Send(&pb.GetSourcesResponse{Source: s}); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -101,10 +137,13 @@ func (s *Server) GetSources(req *pb.GetSourcesRequest, stream pb.Iris_GetSources
 func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) error {
 	s.initialize()
 
-	source := s.getSourceWithIdentifier(req.Source)
-	keys, err := source.GetKeys()
+	if len(req.Source) == 0 {
+		return errors.New("You must provide the source to retrieve keys for")
+	}
+
+	keys, err := s.Store.GetKeys(req.Source)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	for _, k := range keys {
@@ -116,20 +155,25 @@ func (s *Server) GetKeys(req *pb.GetKeysRequest, stream pb.Iris_GetKeysServer) e
 }
 
 // SetValue sets the value for the specified source and key
-func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetValueResponse, error) {
+func (s *Server) SetValue(ctx context.Context, req *pb.SetValueRequest) (*pb.SetValueResponse, error) {
 	s.initialize()
 
-	source := s.getSourceWithIdentifier(req.Source)
-	if source == nil {
-		return nil, errors.New("Source could not be found")
+	if !s.IsLeader() {
+		return proxySetValue(ctx, req, s.Leader())
 	}
 
-	err := source.Set(req.Key, req.Value)
+	if len(req.Source) == 0 {
+		return nil, errors.New("You must provide the source you would like to set a value for")
+	}
+
+	if len(req.Key) == 0 {
+		return nil, errors.New("You must provide the key for the value you would like to set")
+	}
+
+	err := s.Store.Set(req.Source, req.Key, req.Value)
 	if err != nil {
 		return nil, err
 	}
-
-	go s.publish(req.Source, req.Key, req.Value)
 
 	return &pb.SetValueResponse{
 		Value: req.Value,
@@ -137,18 +181,22 @@ func (s *Server) SetValue(c context.Context, req *pb.SetValueRequest) (*pb.SetVa
 }
 
 // GetValue expects a source and key and responds with the associated value
-func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
+func (s *Server) GetValue(ctx context.Context, req *pb.GetValueRequest) (*pb.GetValueResponse, error) {
 	s.initialize()
 
-	source := s.getSourceWithIdentifier(req.Source)
-	if source == nil {
-		return nil, errors.New("Source could not be found")
+	if !s.IsLeader() {
+		return proxyGetValue(ctx, req, s.Leader())
 	}
 
-	value, err := source.Get(req.Key)
-	if err != nil {
-		return nil, err
+	if len(req.Source) == 0 {
+		return nil, errors.New("You must provide the source you would like to get a value for")
 	}
+
+	if len(req.Key) == 0 {
+		return nil, errors.New("You must provide the key for the value you would like to get")
+	}
+
+	value := s.Store.Get(req.Source, req.Key)
 
 	return &pb.GetValueResponse{
 		Value: value,
@@ -159,6 +207,10 @@ func (s *Server) GetValue(c context.Context, req *pb.GetValueRequest) (*pb.GetVa
 func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*pb.RemoveValueResponse, error) {
 	s.initialize()
 
+	if !s.IsLeader() {
+		return proxyRemoveValue(ctx, req, s.Leader())
+	}
+
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")
 	}
@@ -167,13 +219,8 @@ func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*
 		return nil, errors.New("You must provide the key of the value you would like to be removed")
 	}
 
-	s.sourcesMutex.Lock()
-	defer s.sourcesMutex.Unlock()
-
-	if s.sources[req.Source] != nil {
-		if err := s.sources[req.Source].Remove(req.Key); err != nil {
-			return nil, err
-		}
+	if err := s.Store.DeleteKey(req.Source, req.Key); err != nil {
+		return nil, err
 	}
 
 	return &pb.RemoveValueResponse{
@@ -187,14 +234,18 @@ func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*
 func (s *Server) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest) (*pb.RemoveSourceResponse, error) {
 	s.initialize()
 
+	if !s.IsLeader() {
+		return proxyRemoveSource(ctx, req, s.Leader())
+	}
+
 	if len(req.Source) == 0 {
 		return nil, errors.New("You must provide the identifier of source you would like to be removed")
 	}
 
-	s.sourcesMutex.Lock()
-	defer s.sourcesMutex.Unlock()
+	if err := s.Store.DeleteSource(req.Source); err != nil {
+		return nil, err
+	}
 
-	delete(s.sources, req.Source)
 	return &pb.RemoveSourceResponse{
 		Session: req.Session,
 		Source:  req.Source,
@@ -443,29 +494,4 @@ func (s *Server) removeSession(sessionIdentifier string) error {
 	s.sessionsMutex.Unlock()
 
 	return nil
-}
-
-// getSourceWithIdentifier returns the source with the provided identifier, or the existing one if already created
-func (s *Server) getSourceWithIdentifier(identifier string) iris.Source {
-	s.initialize()
-
-	s.sourcesMutex.Lock()
-	defer s.sourcesMutex.Unlock()
-
-	if s.sources == nil {
-		s.sources = make(map[string]iris.Source)
-	}
-
-	source := s.sources[identifier]
-	if source != nil {
-		return source
-	}
-
-	if s.SourceFactory == nil {
-		source = mapsource.NewMapSource(identifier)
-	} else {
-		source = s.SourceFactory(identifier)
-	}
-	s.sources[identifier] = source
-	return source
 }
