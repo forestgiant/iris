@@ -242,6 +242,34 @@ func TestSubscriptions(t *testing.T) {
 	t.Run("TestSourceSubscriptions", func(t *testing.T) {
 		deleteTestSources()
 
+		resume := make(chan struct{})
+		done := make(chan struct{})
+		wg := &sync.WaitGroup{}
+
+		unsubscribed := false
+		var sourceSubCallback api.UpdateHandler = func(u *pb.Update) error {
+			if u.Source != testColorsSource {
+				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
+			} else {
+				if unsubscribed {
+					t.Error("Received update when the client should have been unsubscribed.")
+				} else {
+					wg.Done()
+				}
+			}
+
+			return nil
+		}
+
+		var otherCallback api.UpdateHandler = func(u *pb.Update) error {
+			if u.Source != testColorsSource {
+				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
+			} else {
+				wg.Done()
+			}
+			return nil
+		}
+
 		var tests = []struct {
 			Source string
 			Key    string
@@ -254,27 +282,57 @@ func TestSubscriptions(t *testing.T) {
 			{Source: testSoundsSource, Key: "quiet", Value: []byte("snow")},
 		}
 
-		wg := &sync.WaitGroup{}
-		testFinished := make(chan struct{})
+		sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
+		defer cancelSourceSub()
+		_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
+		if err != nil {
+			t.Error(err)
+			return
+		}
 
-		var sourceSubCallback api.UpdateHandler = func(u *pb.Update) error {
-			if u.Source != testColorsSource {
-				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
-			} else {
-				wg.Done()
-			}
-			return nil
+		_, err = testClient.Subscribe(sourceSubCtx, testColorsSource, &otherCallback)
+		if err != nil {
+			t.Error(err)
+			return
 		}
 
 		go func() {
-			sourceSubCtx, cancelSourceSub := context.WithCancel(context.Background())
-			defer cancelSourceSub()
-			_, err := testClient.Subscribe(sourceSubCtx, testColorsSource, &sourceSubCallback)
-			if err != nil {
-				t.Error(err)
-				return
+			for _, test := range tests {
+				setCtx, cancelSet := context.WithCancel(context.Background())
+				defer cancelSet()
+
+				if test.Source == testColorsSource {
+					wg.Add(2)
+				}
+				if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+					t.Error("Failed to set test value")
+					return
+				}
 			}
 
+			wg.Wait()
+			close(resume)
+		}()
+
+		select {
+		case <-resume:
+		case <-time.After(5 * time.Second):
+			fmt.Println("Test failed")
+			t.Error("Subscriptions took too long to respond before unsubscribe.")
+			return
+		}
+
+		sourceUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
+		defer cancelUnsubSource()
+		_, err = testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println("Unsubscribed")
+		unsubscribed = true
+
+		go func() {
 			for _, test := range tests {
 				setCtx, cancelSet := context.WithCancel(context.Background())
 				defer cancelSet()
@@ -289,20 +347,20 @@ func TestSubscriptions(t *testing.T) {
 			}
 
 			wg.Wait()
-			close(testFinished)
+			close(done)
 		}()
 
 		select {
-		case <-testFinished:
+		case <-done:
 			fmt.Println("Test Finished")
 		case <-time.After(5 * time.Second):
 			fmt.Println("Test failed")
-			t.Error("Subscriptions took too long to respond.")
+			t.Error("Subscriptions took too long to respond after unsubscribe.")
 		}
 
-		sourceUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
-		defer cancelUnsubSource()
-		_, err := testClient.Unsubscribe(sourceUnsubContext, testColorsSource, &sourceSubCallback)
+		otherUnsubContext, cancelUnsubOther := context.WithCancel(context.Background())
+		defer cancelUnsubOther()
+		_, err = testClient.Unsubscribe(otherUnsubContext, testColorsSource, &otherCallback)
 		if err != nil {
 			t.Error(err)
 			return
@@ -326,9 +384,23 @@ func TestSubscriptions(t *testing.T) {
 		}
 
 		wg := &sync.WaitGroup{}
-		testFinished := make(chan struct{})
-
+		resume := make(chan struct{})
+		done := make(chan struct{})
+		unsubscribed := false
 		var keySubCallback api.UpdateHandler = func(u *pb.Update) error {
+			if u.Source == testColorsSource && u.Key == testKey {
+				if unsubscribed {
+					t.Error("Received update when the client should have been unsubscribed.")
+				} else {
+					wg.Done()
+				}
+			} else {
+				t.Error("Received update for ", u, "source, but should only receive updates for the", testColorsSource, "source and", testKey, "key")
+			}
+			return nil
+		}
+
+		var otherSubCallback api.UpdateHandler = func(u *pb.Update) error {
 			if u.Source == testColorsSource && u.Key == testKey {
 				wg.Done()
 			} else {
@@ -337,15 +409,57 @@ func TestSubscriptions(t *testing.T) {
 			return nil
 		}
 
+		keySubCtx, cancelKeySub := context.WithCancel(context.Background())
+		defer cancelKeySub()
+		_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		_, err = testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &otherSubCallback)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
 		go func() {
-			keySubCtx, cancelKeySub := context.WithCancel(context.Background())
-			defer cancelKeySub()
-			_, err := testClient.SubscribeKey(keySubCtx, testColorsSource, testKey, &keySubCallback)
-			if err != nil {
-				t.Error(err)
-				return
+			for _, test := range tests {
+				setCtx, cancelSet := context.WithCancel(context.Background())
+				defer cancelSet()
+
+				if test.Source == testColorsSource && test.Key == testKey {
+					wg.Add(2)
+				}
+
+				if err := testClient.SetValue(setCtx, test.Source, test.Key, test.Value); err != nil {
+					t.Error("Failed to set test value")
+					return
+				}
 			}
 
+			wg.Wait()
+			close(resume)
+		}()
+
+		select {
+		case <-resume:
+		case <-time.After(5 * time.Second):
+			t.Error("Subscriptions took too long to respond before unsubscribe.")
+			return
+		}
+
+		keyUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
+		defer cancelUnsubSource()
+		_, err = testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		unsubscribed = true
+		fmt.Println("Unsubscribed")
+
+		go func() {
 			for _, test := range tests {
 				setCtx, cancelSet := context.WithCancel(context.Background())
 				defer cancelSet()
@@ -361,18 +475,19 @@ func TestSubscriptions(t *testing.T) {
 			}
 
 			wg.Wait()
-			close(testFinished)
+			close(done)
 		}()
 
 		select {
-		case <-testFinished:
+		case <-done:
 		case <-time.After(5 * time.Second):
-			t.Error("Subscriptions took too long to respond.")
+			t.Error("Subscriptions took too long to respond after unsubscribe.")
+			return
 		}
 
-		keyUnsubContext, cancelUnsubSource := context.WithCancel(context.Background())
-		defer cancelUnsubSource()
-		_, err := testClient.UnsubscribeKey(keyUnsubContext, testColorsSource, testKey, &keySubCallback)
+		otherUnsubContext, cancelUnsubOther := context.WithCancel(context.Background())
+		defer cancelUnsubOther()
+		_, err = testClient.UnsubscribeKey(otherUnsubContext, testColorsSource, testKey, &otherSubCallback)
 		if err != nil {
 			t.Error(err)
 			return

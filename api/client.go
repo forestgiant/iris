@@ -331,6 +331,12 @@ func (c *Client) Unsubscribe(ctx context.Context, source string, handler *Update
 
 	if c.sourceHandlers != nil && c.sourceHandlers[source] != nil {
 		c.sourceHandlers[source] = removeHandler(handler, c.sourceHandlers[source])
+
+		if len(c.sourceHandlers[source]) > 0 {
+			return &pb.UnsubscribeResponse{
+				Source: source,
+			}, nil
+		}
 	}
 
 	return c.rpc.Unsubscribe(ctx, &pb.UnsubscribeRequest{
@@ -348,9 +354,14 @@ func (c *Client) UnsubscribeKey(ctx context.Context, source string, key string, 
 	defer c.keyHandlersMutex.Unlock()
 
 	if c.keyHandlers != nil && c.keyHandlers[source] != nil && c.keyHandlers[source][key] != nil {
-		var thecopy []*UpdateHandler
-		copy(thecopy, c.keyHandlers[source][key])
-		c.keyHandlers[source][key] = removeHandler(handler, thecopy)
+		c.keyHandlers[source][key] = removeHandler(handler, c.keyHandlers[source][key])
+
+		if len(c.keyHandlers[source][key]) > 0 {
+			return &pb.UnsubscribeKeyResponse{
+				Source: source,
+				Key:    key,
+			}, nil
+		}
 	}
 
 	return c.rpc.UnsubscribeKey(ctx, &pb.UnsubscribeKeyRequest{
