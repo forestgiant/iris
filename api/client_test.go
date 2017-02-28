@@ -317,7 +317,6 @@ func TestSubscriptions(t *testing.T) {
 		select {
 		case <-resume:
 		case <-time.After(5 * time.Second):
-			fmt.Println("Test failed")
 			t.Error("Subscriptions took too long to respond before unsubscribe.")
 			return
 		}
@@ -329,7 +328,6 @@ func TestSubscriptions(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		fmt.Println("Unsubscribed")
 		unsubscribed = true
 
 		go func() {
@@ -352,9 +350,7 @@ func TestSubscriptions(t *testing.T) {
 
 		select {
 		case <-done:
-			fmt.Println("Test Finished")
 		case <-time.After(5 * time.Second):
-			fmt.Println("Test failed")
 			t.Error("Subscriptions took too long to respond after unsubscribe.")
 		}
 
@@ -457,7 +453,6 @@ func TestSubscriptions(t *testing.T) {
 			return
 		}
 		unsubscribed = true
-		fmt.Println("Unsubscribed")
 
 		go func() {
 			for _, test := range tests {
