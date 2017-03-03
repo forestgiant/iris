@@ -182,9 +182,9 @@ func TestSet(t *testing.T) {
 	})
 
 	t.Run("TestExpectedValue", func(t *testing.T) {
-		var testSetSource = "testsetsource"
-		var testSetKey = "testsetkey"
-		var testSetValue = []byte("testsetvalue")
+		testSetSource := "testsetsource"
+		testSetKey := "testsetkey"
+		testSetValue := []byte("testsetvalue")
 		err := testStore.Set(testSetSource, testSetKey, testSetValue)
 		if err != nil {
 			t.Error(err)
@@ -217,8 +217,8 @@ func TestDeleteKey(t *testing.T) {
 	})
 
 	t.Run("TestExpectedValue", func(t *testing.T) {
-		var testDeleteSource = "testdeletekeysource"
-		var testDeleteKey = "testdeletekeykey"
+		testDeleteSource := "testdeletekeysource"
+		testDeleteKey := "testdeletekeykey"
 
 		testStore.mu.Lock()
 		if testStore.storage == nil {
@@ -255,7 +255,7 @@ func TestDeleteSource(t *testing.T) {
 	})
 
 	t.Run("TestExpectedValue", func(t *testing.T) {
-		var testDeleteSource = "testdeletesourcesource"
+		testDeleteSource := "testdeletesourcesource"
 		testStore.mu.Lock()
 		if testStore.storage == nil {
 			testStore.storage = make(map[string]kvs)

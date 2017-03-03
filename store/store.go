@@ -149,7 +149,7 @@ func (s *Store) GetSources() ([]string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var response = []string{}
+	var response []string
 	for k := range s.storage {
 		response = append(response, k)
 	}
@@ -161,7 +161,7 @@ func (s *Store) GetKeys(source string) ([]string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var response = []string{}
+	var response []string
 	for k := range s.storage[source] {
 		response = append(response, k)
 	}

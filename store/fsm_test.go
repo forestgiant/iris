@@ -12,7 +12,7 @@ func keysMatch(keys1 []string, keys2 []string) bool {
 	}
 
 	for _, key1 := range keys1 {
-		var found = false
+		found := false
 		for _, key2 := range keys2 {
 			if key1 == key2 {
 				found = true
@@ -33,9 +33,9 @@ func TestFSM(t *testing.T) {
 	fsm := (*fsm)(s)
 
 	t.Run("TestSet", func(t *testing.T) {
-		var testSource = "testFSMSetSource"
-		var testKey = "testFSMSetKey"
-		var testValue = []byte("testFSMSetValue")
+		testSource := "testFSMSetSource"
+		testKey := "testFSMSetKey"
+		testValue := []byte("testFSMSetValue")
 		fsm.set(testSource, testKey, testValue)
 
 		fsm.mu.Lock()
@@ -47,10 +47,10 @@ func TestFSM(t *testing.T) {
 	})
 
 	t.Run("TestDeleteSourceWithKeys", func(t *testing.T) {
-		var testSource = "testFSMDeleteSource"
-		var testKey1 = "testFSMDeleteSourceKey1"
-		var testKey2 = "testFSMDeleteSourceKey2"
-		var testValue = []byte("testFSMDeleteSourceValue")
+		testSource := "testFSMDeleteSource"
+		testKey1 := "testFSMDeleteSourceKey1"
+		testKey2 := "testFSMDeleteSourceKey2"
+		testValue := []byte("testFSMDeleteSourceValue")
 
 		fsm.mu.Lock()
 		fsm.storage = make(map[string]kvs)
@@ -73,7 +73,7 @@ func TestFSM(t *testing.T) {
 	})
 
 	t.Run("TestDeleteEmptySource", func(t *testing.T) {
-		var testSource = "testFSMDeleteSource"
+		testSource := "testFSMDeleteSource"
 		fsm.mu.Lock()
 		fsm.storage = make(map[string]kvs)
 		fsm.storage[testSource] = make(kvs)
@@ -91,9 +91,9 @@ func TestFSM(t *testing.T) {
 	})
 
 	t.Run("TestDeleteKey", func(t *testing.T) {
-		var testSource = "testFSMDeleteSource"
-		var testKey = "testFSMDeleteSourceKey"
-		var testValue = []byte("testFSMDeleteSourceValue")
+		testSource := "testFSMDeleteSource"
+		testKey := "testFSMDeleteSourceKey"
+		testValue := []byte("testFSMDeleteSourceValue")
 		fsm.mu.Lock()
 		fsm.storage = make(map[string]kvs)
 		fsm.storage[testSource] = make(kvs)
@@ -113,7 +113,7 @@ func TestFSM(t *testing.T) {
 	})
 
 	t.Run("TestDeleteUnknownKey", func(t *testing.T) {
-		var testSource = "testFSMDeleteSource"
+		testSource := "testFSMDeleteSource"
 		fsm.mu.Lock()
 		fsm.storage = make(map[string]kvs)
 		fsm.storage[testSource] = make(kvs)
@@ -126,14 +126,14 @@ func TestFSM(t *testing.T) {
 	})
 
 	t.Run("TestApplyBadCommand", func(t *testing.T) {
-		var c = command{Operation: "testFSMBadCommand"}
+		c := command{Operation: "testFSMBadCommand"}
 		if fsm.applyCommand(c) != nil {
 			t.Error("Expected applyCommand to return nil")
 		}
 	})
 
 	t.Run("TestCloneStorage", func(t *testing.T) {
-		var original = make(map[string]kvs)
+		original := make(map[string]kvs)
 		original["cloneSource1"] = make(kvs)
 		original["cloneSource1"]["cloneKey1"] = []byte("cloneValue1")
 		original["cloneSource1"]["cloneKey2"] = []byte("cloneValue2")

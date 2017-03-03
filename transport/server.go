@@ -380,13 +380,13 @@ func (s *Server) UnsubscribeKey(ctx context.Context, req *pb.UnsubscribeKeyReque
 func (s *Server) publish(source string, key string, value []byte) error {
 	s.initialize()
 
-	var update = &pb.Update{
+	update := &pb.Update{
 		Source: source,
 		Key:    key,
 		Value:  value,
 	}
 
-	var notify = func(identifier string, update *pb.Update) error {
+	notify := func(identifier string, update *pb.Update) error {
 		stream, ok := s.sessions[identifier]
 		if ok {
 			if stream.Listener != nil {

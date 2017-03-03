@@ -38,7 +38,7 @@ func (f *fsm) deleteKey(source, key string) bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	var found = false
+	found := false
 	if m, ok := f.storage[source]; ok {
 		if _, ok := m[key]; ok {
 			found = true
