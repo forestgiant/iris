@@ -45,12 +45,12 @@ const (
 func printUsageInstructions() {
 	fmt.Println("usage: iris-cli <command> [<args>]")
 	fmt.Println("The available commands are: ")
-	fmt.Printf("\t%s\t\tSet a value\n", setCommandName)
-	fmt.Printf("\t%s\t\tGet a value\n", getCommandName)
+	fmt.Printf("\t%s\t\t\tSet a value\n", setCommandName)
+	fmt.Printf("\t%s\t\t\tGet a value\n", getCommandName)
 	fmt.Printf("\t%s\t\tGet a list of available sources\n", getSourcesCommandName)
-	fmt.Printf("\t%s\t\tGet a list of keys contained in a source\n", getKeysCommandName)
-	fmt.Printf("\t%s\tRemove a source\n", removeSourceCommandName)
-	fmt.Printf("\t%s\tRemove a key/value pair\n", removeValueCommandName)
+	fmt.Printf("\t%s\t\t\tGet a list of keys contained in a source\n", getKeysCommandName)
+	fmt.Printf("\t%s\t\tRemove a source\n", removeSourceCommandName)
+	fmt.Printf("\t%s\t\tRemove a key/value pair\n", removeValueCommandName)
 }
 
 func main() {
