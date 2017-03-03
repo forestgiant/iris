@@ -3,7 +3,6 @@ package api_test
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -28,6 +27,9 @@ var testServiceAddress string
 const testColorsSource = "com.forestgiant.iris.testing.colors"
 const testSoundsSource = "com.forestgiant.iris.testing.sounds"
 
+const exitStatusSuccess = 0
+const exitStatusError = 1
+
 type SuppressedWriter struct{}
 
 func (w *SuppressedWriter) Write(p []byte) (n int, err error) {
@@ -35,73 +37,75 @@ func (w *SuppressedWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestMain(m *testing.M) {
-	wd, err := os.Getwd()
-	if err != nil {
-		fmt.Println("Unable to get current working directory", err)
-		os.Exit(1)
-	}
-
-	port, err := portutil.GetUniqueTCP()
-	if err != nil {
-		fmt.Println("unable to obtain open port", err)
-		os.Exit(1)
-	}
-
-	testServiceAddress = fmt.Sprintf("127.0.0.1:%d", port)
-	l, err := net.Listen("tcp", testServiceAddress)
-	if err != nil {
-		fmt.Println("unable to start tcp listener", err)
-		os.Exit(1)
-	}
-
-	testRaftDir := filepath.Join(wd, "com.forestgiant.iris.testing.client.raftDir")
-	var store = store.NewStore(":12000", testRaftDir, fglog.Logger{Writer: &SuppressedWriter{}})
-	if err := store.Open(true); err != nil {
-		fmt.Println("Failed to open data store.", err)
-		//TODO: Find a way to defer this call (another call below as well)
-		os.RemoveAll(testRaftDir)
-		os.Exit(1)
-	}
-
-	//TODO: Find a better way to ensure there is a leader
-	time.Sleep(3 * time.Second)
-
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
-	pb.RegisterIrisServer(grpcServer, &transport.Server{
-		Store: store,
-	})
-	errchan := make(chan error)
-	go func() {
-		errchan <- grpcServer.Serve(l)
-	}()
-
-	statusChan := make(chan int)
-	go func() {
-		clientCtx, cancelClient := context.WithTimeout(context.Background(), 500*time.Millisecond)
-		defer cancelClient()
-		testClient, err = api.NewClient(clientCtx, testServiceAddress, nil)
+	main := func() int {
+		wd, err := os.Getwd()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println("Unable to get current working directory", err)
+			return exitStatusError
 		}
 
-		statusChan <- m.Run()
+		port, err := portutil.GetUniqueTCP()
+		if err != nil {
+			fmt.Println("unable to obtain open port", err)
+			return exitStatusError
+		}
 
-	}()
+		testServiceAddress = fmt.Sprintf("127.0.0.1:%d", port)
+		testRaftAddress := fmt.Sprintf("127.0.0.1:%d", port+1)
 
-	for {
-		select {
-		case err := <-errchan:
-			fmt.Println(err)
-		case status := <-statusChan:
-			if err := testClient.Close(); err != nil {
-				log.Fatal(err)
+		listener, err := net.Listen("tcp", testServiceAddress)
+		if err != nil {
+			fmt.Println("unable to start tcp listener", err)
+			return exitStatusError
+		}
+
+		testRaftDir := filepath.Join(wd, "com.forestgiant.iris.testing.client.raftDir")
+		defer os.RemoveAll(testRaftDir)
+
+		var store = store.NewStore(testRaftAddress, testRaftDir, fglog.Logger{Writer: &SuppressedWriter{}})
+		if err := store.Open(true); err != nil {
+			return exitStatusError
+		}
+
+		var opts []grpc.ServerOption
+		grpcServer := grpc.NewServer(opts...)
+		pb.RegisterIrisServer(grpcServer, &transport.Server{
+			Store: store,
+		})
+		errchan := make(chan error)
+		go func() {
+			errchan <- grpcServer.Serve(listener)
+		}()
+
+		statusChan := make(chan int)
+		go func() {
+			clientCtx, cancelClient := context.WithTimeout(context.Background(), 500*time.Millisecond)
+			defer cancelClient()
+			testClient, err = api.NewClient(clientCtx, testServiceAddress, nil)
+			if err != nil {
+				errchan <- err
+				return
 			}
-			//TODO: Find a way to defer this call (another call above as well)
-			os.RemoveAll(testRaftDir)
-			os.Exit(status)
+			statusChan <- m.Run()
+
+		}()
+
+		for {
+			select {
+			case err := <-errchan:
+				fmt.Println(err)
+				return exitStatusError
+			case status := <-statusChan:
+				if err := testClient.Close(); err != nil {
+					fmt.Println(err)
+				}
+
+				return status
+			}
 		}
 	}
+
+	os.Exit(main())
 }
 
 func deleteTestSources() []error {
@@ -151,7 +155,7 @@ func TestNewClient(t *testing.T) {
 func TestSettersAndGetters(t *testing.T) {
 	deleteTestSources()
 
-	var tests = []struct {
+	tests := []struct {
 		Source string
 		Key    string
 		Value  []byte
@@ -270,7 +274,7 @@ func TestSubscriptions(t *testing.T) {
 			return nil
 		}
 
-		var tests = []struct {
+		tests := []struct {
 			Source string
 			Key    string
 			Value  []byte
@@ -367,7 +371,7 @@ func TestSubscriptions(t *testing.T) {
 		deleteTestSources()
 
 		testKey := "primary"
-		var tests = []struct {
+		tests := []struct {
 			Source string
 			Key    string
 			Value  []byte
