@@ -95,7 +95,7 @@ func ExampleGetKeys() {
 
 	keys, err := testClient.GetKeys(ctx, "source")
 	if err != nil {
-		//handle GetSources error
+		//handle GetKeys error
 		return
 	}
 
