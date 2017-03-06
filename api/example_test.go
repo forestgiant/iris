@@ -184,10 +184,9 @@ func ExampleSubscribe() {
 	}
 	defer testClient.Close()
 
-	var handler UpdateHandler = func(u *pb.Update) error {
+	var handler UpdateHandler = func(u *pb.Update) {
 		//this will be called when a value is updated for the source
 		fmt.Println("Received updated value", u.Value, "for source", u.Source, "and key", u.Key)
-		return nil
 	}
 
 	if _, err := testClient.Subscribe(ctx, "source", &handler); err != nil {
@@ -206,10 +205,9 @@ func ExampleSubscribeKey() {
 	}
 	defer testClient.Close()
 
-	var handler UpdateHandler = func(u *pb.Update) error {
+	var handler UpdateHandler = func(u *pb.Update) {
 		//this will be called when a value is updated for the key
 		fmt.Println("Received updated value", u.Value, "for source", u.Source, "and key", u.Key)
-		return nil
 	}
 
 	if _, err := testClient.SubscribeKey(ctx, "source", "key", &handler); err != nil {
@@ -228,10 +226,9 @@ func ExampleUnsubscribe() {
 	}
 	defer testClient.Close()
 
-	var handler UpdateHandler = func(u *pb.Update) error {
+	var handler UpdateHandler = func(u *pb.Update) {
 		//this will be called when a value is updated for the source
 		fmt.Println("Received updated value", u.Value, "for source", u.Source, "and key", u.Key)
-		return nil
 	}
 
 	if _, err := testClient.Unsubscribe(ctx, "source", &handler); err != nil {
@@ -250,10 +247,9 @@ func ExampleUnsubscribeKey() {
 	}
 	defer testClient.Close()
 
-	var handler UpdateHandler = func(u *pb.Update) error {
+	var handler UpdateHandler = func(u *pb.Update) {
 		//this will be called when a value is updated for the key
 		fmt.Println("Received updated value", u.Value, "for source", u.Source, "and key", u.Key)
-		return nil
 	}
 
 	if _, err := testClient.UnsubscribeKey(ctx, "source", "key", &handler); err != nil {

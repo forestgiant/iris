@@ -13,7 +13,7 @@ import (
 )
 
 // UpdateHandler descibes a function used for handling values received by the client
-type UpdateHandler func(update *pb.Update) error
+type UpdateHandler func(update *pb.Update)
 
 // Client for communicating with an Iris server
 type Client struct {

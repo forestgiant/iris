@@ -251,7 +251,7 @@ func TestSubscriptions(t *testing.T) {
 		wg := &sync.WaitGroup{}
 
 		unsubscribed := false
-		var sourceSubCallback api.UpdateHandler = func(u *pb.Update) error {
+		var sourceSubCallback api.UpdateHandler = func(u *pb.Update) {
 			if u.Source != testColorsSource {
 				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
 			} else {
@@ -261,17 +261,14 @@ func TestSubscriptions(t *testing.T) {
 					wg.Done()
 				}
 			}
-
-			return nil
 		}
 
-		var otherCallback api.UpdateHandler = func(u *pb.Update) error {
+		var otherCallback api.UpdateHandler = func(u *pb.Update) {
 			if u.Source != testColorsSource {
 				t.Error("Received update for ", u.Source, "source, but should only receive updates for the", testColorsSource, "source")
 			} else {
 				wg.Done()
 			}
-			return nil
 		}
 
 		tests := []struct {
@@ -387,7 +384,7 @@ func TestSubscriptions(t *testing.T) {
 		resume := make(chan struct{})
 		done := make(chan struct{})
 		unsubscribed := false
-		var keySubCallback api.UpdateHandler = func(u *pb.Update) error {
+		var keySubCallback api.UpdateHandler = func(u *pb.Update) {
 			if u.Source == testColorsSource && u.Key == testKey {
 				if unsubscribed {
 					t.Error("Received update when the client should have been unsubscribed.")
@@ -397,16 +394,14 @@ func TestSubscriptions(t *testing.T) {
 			} else {
 				t.Error("Received update for ", u, "source, but should only receive updates for the", testColorsSource, "source and", testKey, "key")
 			}
-			return nil
 		}
 
-		var otherSubCallback api.UpdateHandler = func(u *pb.Update) error {
+		var otherSubCallback api.UpdateHandler = func(u *pb.Update) {
 			if u.Source == testColorsSource && u.Key == testKey {
 				wg.Done()
 			} else {
 				t.Error("Received update for ", u, "source, but should only receive updates for the", testColorsSource, "source and", testKey, "key")
 			}
-			return nil
 		}
 
 		keySubCtx, cancelKeySub := context.WithCancel(context.Background())
