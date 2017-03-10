@@ -1,6 +1,6 @@
 {
 	"ImportPath": "gitlab.fg/otis/iris",
-	"GoVersion": "go1.7",
+	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Packages": [
 		"./..."
@@ -14,6 +14,10 @@
 			"ImportPath": "github.com/boltdb/bolt",
 			"Comment": "v1.3.0-34-g0d9f544",
 			"Rev": "0d9f544bb94aac29c185968483459ef74d6deb5d"
+		},
+		{
+			"ImportPath": "github.com/forestgiant/grpclog",
+			"Rev": "4b1b16a1f3ae8319cc2f38e4aa37cde6fdea1f5f"
 		},
 		{
 			"ImportPath": "github.com/forestgiant/log",

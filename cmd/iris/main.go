@@ -14,6 +14,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/grpclog"
 
 	"github.com/forestgiant/semver"
 	"gitlab.fg/go/stela"
@@ -22,6 +23,7 @@ import (
 	"gitlab.fg/otis/iris/store"
 	"gitlab.fg/otis/iris/transport"
 
+	fggrpclog "github.com/forestgiant/grpclog"
 	fglog "github.com/forestgiant/log"
 	stela_api "gitlab.fg/go/stela/api"
 	iris_api "gitlab.fg/otis/iris/api"
@@ -35,6 +37,11 @@ const (
 	exitStatusInterrupt = 2
 )
 
+func init() {
+	l := fglog.Logger{}.With("logger", "grpc")
+	grpclog.SetLogger(&fggrpclog.Structured{Logger: &l})
+}
+
 func main() {
 	os.Exit(run())
 }
@@ -43,7 +50,7 @@ func main() {
 // us to properly capture the exit status while ensuring that defers are
 // captured before the return
 func run() (status int) {
-	logger := fglog.Logger{}.With("time", fglog.DefaultTimestamp, "caller", fglog.DefaultCaller, "service", "iris")
+	logger := fglog.Logger{}.With("logger", "iris", "time", fglog.DefaultTimestamp, "caller", fglog.DefaultCaller, "service", "iris")
 
 	// Setup semantic versioning
 	if err := semver.SetVersion(version); err != nil {

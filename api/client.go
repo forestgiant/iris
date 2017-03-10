@@ -7,10 +7,16 @@ import (
 	"io"
 	"sync"
 
+	fggrpclog "github.com/forestgiant/grpclog"
 	"gitlab.fg/otis/iris/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/grpclog"
 )
+
+func init() {
+	grpclog.SetLogger(&fggrpclog.Suppressed{})
+}
 
 // UpdateHandler descibes a function used for handling values received by the client
 type UpdateHandler func(update *pb.Update)

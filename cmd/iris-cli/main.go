@@ -58,6 +58,8 @@ func main() {
 }
 
 func run() (status int) {
+	logger := fglog.Logger{}.With("time", fglog.DefaultTimestamp)
+
 	var (
 		ca       = "ca.cer"
 		addr     string
@@ -118,7 +120,7 @@ func run() (status int) {
 	if len(addr) == 0 {
 		addr = fmt.Sprintf("127.0.0.1:%d", iris.DefaultServicePort)
 	}
-	fmt.Printf("Connecting to %s.\n", addr)
+	logger.Info("Connecting", "addr", addr)
 
 	var client *api.Client
 	var err error
@@ -131,12 +133,12 @@ func run() (status int) {
 	}
 
 	if err != nil {
-		fmt.Println("Failed to connect to Iris server.", err)
+		logger.Error("Failed to connect to Iris server", "error", err.Error())
 		return exitStatusError
 	}
 	defer client.Close()
 
-	r := &runner{Client: client, Logger: &fglog.Logger{Formatter: fglog.LogfmtFormatter{}}}
+	r := &runner{Client: client, Logger: &logger}
 	switch command {
 	case setCommandName:
 		err = r.setValue(source, key, []byte(value))
@@ -155,7 +157,7 @@ func run() (status int) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
+		logger.Error("Command failed", "error", err.Error())
 		return exitStatusError
 	}
 
