@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/signal"
@@ -60,18 +63,20 @@ func run() (status int) {
 
 	// Define our inputs
 	var (
-		insecure  = false
-		nostela   = false
-		stelaAddr = stela.DefaultStelaAddress
-		certPath  = "server.cer"
-		keyPath   = "server.key"
-		raftDir   = "raftDir"
-		port      = iris.DefaultServicePort
-		joinAddr  = ""
+		insecure   = false
+		nostela    = false
+		stelaAddr  = stela.DefaultStelaAddress
+		certPath   = "server.crt"
+		keyPath    = "server.key"
+		caPath     = "ca.crt"
+		raftDir    = "raftDir"
+		serverName = "serverName"
+		port       = iris.DefaultServicePort
+		joinAddr   = ""
 	)
 
 	// Parse, prepare, and validate inputs
-	if err := prepareInputs(&port, &insecure, &nostela, &stelaAddr, &certPath, &keyPath, &raftDir, &joinAddr); err != nil {
+	if err := prepareInputs(&port, &insecure, &nostela, &stelaAddr, &certPath, &keyPath, &caPath, &serverName, &raftDir, &joinAddr); err != nil {
 		logger.Error("Error parsing inputs.", "error", err.Error())
 		return exitStatusError
 	}
@@ -157,11 +162,34 @@ func run() (status int) {
 
 		var opts []grpc.ServerOption
 		if !insecure {
-			creds, err := credentials.NewServerTLSFromFile(certPath, keyPath)
+			// Load the certificates from disk
+			certificate, err := tls.LoadX509KeyPair(certPath, keyPath)
 			if err != nil {
-				errchan <- fmt.Errorf("Failed to generate credentials. %s", err)
+				errchan <- fmt.Errorf("Failed to load certificate. %s", err)
 				return
 			}
+
+			// Create a certificate pool from the certificate authority
+			certPool := x509.NewCertPool()
+			ca, err := ioutil.ReadFile(caPath)
+			if err != nil {
+				errchan <- fmt.Errorf("Failed to read CA certificate. %s", err)
+				return
+			}
+
+			// Append the client certificates from the CA
+			if ok := certPool.AppendCertsFromPEM(ca); !ok {
+				errchan <- errors.New("Failed to append client certs")
+				return
+			}
+
+			// Create the TLS credentials
+			creds := credentials.NewTLS(&tls.Config{
+				ClientAuth:   tls.RequireAndVerifyClientCert,
+				Certificates: []tls.Certificate{certificate},
+				ClientCAs:    certPool,
+			})
+
 			opts = append(opts, grpc.Creds(creds))
 		}
 
@@ -169,6 +197,12 @@ func run() (status int) {
 		grpcServer := grpc.NewServer(opts...)
 		server := &transport.Server{
 			Store: store,
+			Proxy: &transport.Proxy{
+				ServerName: serverName,
+				CertPath:   certPath,
+				KeyPath:    keyPath,
+				CAPath:     caPath,
+			},
 		}
 		pb.RegisterIrisServer(grpcServer, server)
 		errchan <- grpcServer.Serve(l)
@@ -178,7 +212,7 @@ func run() (status int) {
 	if !startAsLeader {
 		go func() {
 			logger.Info("Joining raft cluster")
-			if err := join(joinAddr, raftAddr, 500*time.Millisecond); err != nil {
+			if err := join(joinAddr, raftAddr, serverName, certPath, keyPath, caPath, 500*time.Millisecond); err != nil {
 				errchan <- fmt.Errorf("Failed to join raft cluster. %s", err)
 			}
 		}()
@@ -209,13 +243,15 @@ func fetchJoinAddress(client *stela_api.Client) (string, error) {
 	return services[0].IPv4Address(), nil
 }
 
-func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, raftDir *string, joinAddr *string) error {
+func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, caPath *string, serverName *string, raftDir *string, joinAddr *string) error {
 	// Parse command line flags
 	flag.BoolVar(insecure, "insecure", *insecure, "Disable SSL, allowing unenecrypted communication with this service.")
 	flag.BoolVar(nostela, "nostela", *nostela, "Disable automatic stela registration.")
 	flag.StringVar(stelaAddr, "stela", *stelaAddr, "Address of the stela service you would like to use for discovery")
 	flag.StringVar(certPath, "cert", *certPath, "Path to the certificate file for the server.")
 	flag.StringVar(keyPath, "key", *keyPath, "Path to the private key file for the server.")
+	flag.StringVar(caPath, "ca", *caPath, "Path to the private key file for the server.")
+	flag.StringVar(serverName, "serverName", *serverName, "The common name of the server you are connecting to.")
 	flag.IntVar(port, "port", *port, "Port used for grpc communications.")
 	flag.StringVar(raftDir, "raftdir", *raftDir, "Directory used to store raft data.")
 	flag.StringVar(joinAddr, "join", *joinAddr, "Address of the raft cluster leader you would like to join.")
@@ -234,11 +270,11 @@ func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, 
 }
 
 // join the specified raft cluster
-func join(joinAddr, raftAddr string, timeout time.Duration) error {
+func join(joinAddr, raftAddr string, serverName string, cert string, key string, ca string, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	client, err := iris_api.NewTLSClient(ctx, joinAddr, "iris.forestgiant.com", "ca.cer")
+	client, err := iris_api.NewTLSClient(ctx, joinAddr, serverName, cert, key, ca)
 	if err != nil {
 		return err
 	}

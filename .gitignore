@@ -1,3 +1,4 @@
 *.key
 *.cer
+*.crt
 cmd/iris/raftDir

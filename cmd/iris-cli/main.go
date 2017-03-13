@@ -23,20 +23,26 @@ const (
 	removeSourceCommandName = "removesource"
 	removeValueCommandName  = "removekey"
 
-	sourceUsage   = "The name of the source to be used."
-	sourceParam   = "source"
-	keyUsage      = "The name of the key to be used."
-	keyParam      = "key"
-	valueUsage    = "The value to be used."
-	valueParam    = "value"
-	addrUsage     = "Address of the stela server to connect to."
-	addrParam     = "addr"
-	caPathUsage   = "Path to the certificate authority you would like to use."
-	caPathParam   = "ca"
-	insecureUsage = "Disable SSL, allowing unenecrypted communication with the service."
-	insecureParam = "insecure"
-	noStelaUsage  = "Disable usage of Stela for service discovery."
-	noStelaParam  = "nostela"
+	sourceUsage     = "The name of the source to be used."
+	sourceParam     = "source"
+	keyUsage        = "The name of the key to be used."
+	keyParam        = "key"
+	valueUsage      = "The value to be used."
+	valueParam      = "value"
+	addrUsage       = "Address of the stela server to connect to."
+	addrParam       = "addr"
+	serverNameUsage = "The name of the server you would like to "
+	serverNameParam = "serverName"
+	clientCertUsage = "Path to the certificate file for the client."
+	clientCertParam = "clientCert"
+	clientKeyUsage  = "Path to the private key file for the client."
+	clientKeyParam  = "clientKey"
+	caPathUsage     = "Path to the certificate authority you would like to use."
+	caPathParam     = "ca"
+	insecureUsage   = "Disable SSL, allowing unenecrypted communication with the service."
+	insecureParam   = "insecure"
+	noStelaUsage    = "Disable usage of Stela for service discovery."
+	noStelaParam    = "nostela"
 
 	exitStatusSuccess = 0
 	exitStatusError   = 1
@@ -61,14 +67,17 @@ func run() (status int) {
 	logger := fglog.Logger{}.With("time", fglog.DefaultTimestamp)
 
 	var (
-		ca       = "ca.cer"
-		addr     string
-		command  string
-		source   string
-		key      string
-		value    string
-		insecure = false
-		noStela  = false
+		clientCert = "client.crt"
+		clientKey  = "client.key"
+		ca         = "ca.crt"
+		serverName = "Iris"
+		addr       string
+		command    string
+		source     string
+		key        string
+		value      string
+		insecure   = false
+		noStela    = false
 	)
 
 	if len(os.Args) <= 1 {
@@ -88,7 +97,10 @@ func run() (status int) {
 	}
 
 	flag := flag.NewFlagSet(command, flag.ExitOnError)
+	flag.StringVar(&clientCert, clientCertParam, clientCert, clientCertUsage)
+	flag.StringVar(&clientKey, clientKeyParam, clientKey, clientKeyUsage)
 	flag.StringVar(&ca, caPathParam, ca, caPathUsage)
+	flag.StringVar(&serverName, serverNameParam, serverName, serverNameUsage)
 	flag.StringVar(&addr, addrParam, addr, addrUsage)
 	flag.StringVar(&source, sourceParam, source, sourceUsage)
 	flag.StringVar(&key, keyParam, key, keyUsage)
@@ -129,7 +141,7 @@ func run() (status int) {
 	if insecure || len(ca) == 0 {
 		client, err = api.NewClient(connectCtx, addr, nil)
 	} else {
-		client, err = api.NewTLSClient(connectCtx, addr, "iris.forestgiant.com", ca)
+		client, err = api.NewTLSClient(connectCtx, addr, serverName, clientCert, clientKey, ca)
 	}
 
 	if err != nil {

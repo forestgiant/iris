@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"sync"
 
 	fggrpclog "github.com/forestgiant/grpclog"
@@ -70,24 +73,41 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 	return c, nil
 }
 
-// NewTLSClient returns a new Iris GRPC client for the given server address.
-// The certificateAuthority field allows you to provide a root certificate authority
-// to use when verifying the remote server's identity.
-// The serverNameOverride field is for testing only. If set to a non empty string,
-// it will override the virtual host name of authority (e.g. :authority header field)
-// in requests. This field is ignored if a certificateAuthority is not provided,
-// which is interpreted as the desire to establish an insecure connection.
+// NewTLSClient returns a new Iris GRPC client for the given server address.  You must provide paths to a
+// certificate authority, client certificate, and client private key.  You must also provide a value for
+// server name that matches the common name in the certificate of the server you are connecting to.
 // The client's Close method should be called when the returned client is no longer needed.
-func NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride string, certificateAuthority string) (*Client, error) {
+func NewTLSClient(ctx context.Context, serverAddress string, serverName string, cert string, privateKey string, certificateAuthority string) (*Client, error) {
 	var opts []grpc.DialOption
-	if len(certificateAuthority) > 0 {
-		creds, err := credentials.NewClientTLSFromFile(certificateAuthority, serverNameOverride)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to generate credentials %v", err)
-		}
-		opts = append(opts, grpc.WithTransportCredentials(creds))
+	if len(cert) == 0 || len(privateKey) == 0 || len(certificateAuthority) == 0 || len(serverName) == 0 {
+		return nil, errors.New("Insufficient security credentials provided")
 	}
 
+	// Load the client certificates from disk
+	certificate, err := tls.LoadX509KeyPair(cert, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("Could not load client key pair: %s", err)
+	}
+
+	// Create a certificate pool from the certificate authority
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(certificateAuthority)
+	if err != nil {
+		return nil, fmt.Errorf("Could not read ca certificate: %s", err)
+	}
+
+	// Append the certificates from the CA
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		return nil, errors.New("Failed to append ca certs")
+	}
+
+	creds := credentials.NewTLS(&tls.Config{
+		ServerName:   serverName,
+		Certificates: []tls.Certificate{certificate},
+		RootCAs:      certPool,
+	})
+
+	opts = append(opts, grpc.WithTransportCredentials(creds))
 	return NewClient(ctx, serverAddress, opts)
 }
 

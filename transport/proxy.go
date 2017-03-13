@@ -10,20 +10,33 @@ import (
 	"gitlab.fg/otis/iris/pb"
 )
 
+//Proxy is used to redirect request to an alternate Iris instance
+type Proxy struct {
+	ServerName string
+	CertPath   string
+	KeyPath    string
+	CAPath     string
+}
+
 var errProxyLeader = errors.New("Unable to determine appropriate proxy address for raft cluster leader")
 
-func getProxyAddress(leaderRaftAddr string) string {
+func (p *Proxy) getProxyAddress(leaderRaftAddr string) string {
 	host, portString, err := net.SplitHostPort(leaderRaftAddr)
-	p, err := strconv.Atoi(portString)
+	port, err := strconv.Atoi(portString)
 	if err != nil {
 		return ""
 	}
-	return net.JoinHostPort(host, strconv.Itoa(p-1))
+	return net.JoinHostPort(host, strconv.Itoa(port-1))
 }
 
-func proxyJoin(ctx context.Context, req *pb.JoinRequest, addr string) (*pb.JoinResponse, error) {
-	proxyAddr := getProxyAddress(addr)
-	client, err := iris_api.NewTLSClient(ctx, proxyAddr, "iris.forestgiant.com", "ca.cer")
+func (p *Proxy) getProxyClient(ctx context.Context, address string) (*iris_api.Client, error) {
+	proxyAddr := p.getProxyAddress(address)
+	return iris_api.NewTLSClient(ctx, proxyAddr, p.ServerName, p.CertPath, p.KeyPath, p.CAPath)
+}
+
+//Join is used to redirect a Join request to an alternate server
+func (p *Proxy) Join(ctx context.Context, req *pb.JoinRequest, addr string) (*pb.JoinResponse, error) {
+	client, err := p.getProxyClient(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -36,9 +49,9 @@ func proxyJoin(ctx context.Context, req *pb.JoinRequest, addr string) (*pb.JoinR
 	return &pb.JoinResponse{}, nil
 }
 
-func proxySetValue(ctx context.Context, req *pb.SetValueRequest, addr string) (*pb.SetValueResponse, error) {
-	proxyAddr := getProxyAddress(addr)
-	client, err := iris_api.NewTLSClient(ctx, proxyAddr, "iris.forestgiant.com", "ca.cer")
+//SetValue is used to redirect a SetValue request to an alternate server
+func (p *Proxy) SetValue(ctx context.Context, req *pb.SetValueRequest, addr string) (*pb.SetValueResponse, error) {
+	client, err := p.getProxyClient(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +66,9 @@ func proxySetValue(ctx context.Context, req *pb.SetValueRequest, addr string) (*
 	}, nil
 }
 
-func proxyGetValue(ctx context.Context, req *pb.GetValueRequest, addr string) (*pb.GetValueResponse, error) {
-	proxyAddr := getProxyAddress(addr)
-	client, err := iris_api.NewTLSClient(ctx, proxyAddr, "iris.forestgiant.com", "ca.cer")
+//GetValue is used to redirect a GetValue request to an alternate server
+func (p *Proxy) GetValue(ctx context.Context, req *pb.GetValueRequest, addr string) (*pb.GetValueResponse, error) {
+	client, err := p.getProxyClient(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +84,9 @@ func proxyGetValue(ctx context.Context, req *pb.GetValueRequest, addr string) (*
 	}, nil
 }
 
-func proxyRemoveValue(ctx context.Context, req *pb.RemoveValueRequest, addr string) (*pb.RemoveValueResponse, error) {
-	proxyAddr := getProxyAddress(addr)
-	client, err := iris_api.NewTLSClient(ctx, proxyAddr, "iris.forestgiant.com", "ca.cer")
+//RemoveValue is used to redirect a RemoveValue request to an alternate server
+func (p *Proxy) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest, addr string) (*pb.RemoveValueResponse, error) {
+	client, err := p.getProxyClient(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -90,9 +103,9 @@ func proxyRemoveValue(ctx context.Context, req *pb.RemoveValueRequest, addr stri
 	}, nil
 }
 
-func proxyRemoveSource(ctx context.Context, req *pb.RemoveSourceRequest, addr string) (*pb.RemoveSourceResponse, error) {
-	proxyAddr := getProxyAddress(addr)
-	client, err := iris_api.NewTLSClient(ctx, proxyAddr, "iris.forestgiant.com", "ca.cer")
+//RemoveSource is used to redirect a RemoveSource request to an alternate server
+func (p *Proxy) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest, addr string) (*pb.RemoveSourceResponse, error) {
+	client, err := p.getProxyClient(ctx, addr)
 	if err != nil {
 		return nil, err
 	}

@@ -8,9 +8,9 @@ func NewClient(ctx context.Context, serverAddress string, opts []grpc.DialOption
 ```
 
 ###  NewTLSClient
-NewTLSClient returns a new Iris GRPC client for the given server address. The certificateAuthority field allows you to provide a root certificate authority to use when verifying the remote server's identity. The serverNameOverride field is for testing only. If set to a non empty string, it will override the virtual host name of authority (e.g. :authority header field) in requests. This field is ignored if a certificateAuthority is not provided, which is interpreted as the desire to establish an insecure connection. The client's Close method should be called when the returned client is no longer needed.
+NewTLSClient returns a new Iris GRPC client for the given server address.  You must provide paths to a certificate authority, client certificate, and client private key.  You must also provide a value for server name that matches the common name in the certificate of the server you are connecting to.  The client's Close method should be called when the returned client is no longer needed.
 ```
-NewTLSClient(ctx context.Context, serverAddress string, serverNameOverride string, certificateAuthority string) (*Client, error)
+NewTLSClient(ctx context.Context, serverAddress string, serverName string, cert string, privateKey string, certificateAuthority string) (*Client, error)
 ```
 
 ### Close

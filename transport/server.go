@@ -26,6 +26,7 @@ type Session struct {
 // Server implements the generated pb.IrisServer interface
 type Server struct {
 	Store           *store.Store                     //data storage using raft consensus mechanisms
+	Proxy           *Proxy                           //request proxying mechanism
 	initialized     bool                             //indicates whether Init has been called
 	sessions        map[string]*Session              //collection of sessions
 	sessionsMutex   *sync.Mutex                      //used to lock the sessions collection
@@ -74,7 +75,10 @@ func (s *Server) Join(ctx context.Context, req *pb.JoinRequest) (*pb.JoinRespons
 	s.initialize()
 
 	if !s.IsLeader() {
-		return proxyJoin(ctx, req, s.Leader())
+		if s.Proxy == nil {
+			return nil, errors.New("Failed to proxy request to the leader: No proxy mechanism configured")
+		}
+		return s.Proxy.Join(ctx, req, s.Leader())
 	}
 
 	if err := s.Store.Join(req.Address); err != nil {
@@ -159,7 +163,10 @@ func (s *Server) SetValue(ctx context.Context, req *pb.SetValueRequest) (*pb.Set
 	s.initialize()
 
 	if !s.IsLeader() {
-		return proxySetValue(ctx, req, s.Leader())
+		if s.Proxy == nil {
+			return nil, errors.New("Failed to proxy request to the leader: No proxy mechanism configured")
+		}
+		return s.Proxy.SetValue(ctx, req, s.Leader())
 	}
 
 	if len(req.Source) == 0 {
@@ -185,7 +192,10 @@ func (s *Server) GetValue(ctx context.Context, req *pb.GetValueRequest) (*pb.Get
 	s.initialize()
 
 	if !s.IsLeader() {
-		return proxyGetValue(ctx, req, s.Leader())
+		if s.Proxy == nil {
+			return nil, errors.New("Failed to proxy request to the leader: No proxy mechanism configured")
+		}
+		return s.Proxy.GetValue(ctx, req, s.Leader())
 	}
 
 	if len(req.Source) == 0 {
@@ -208,7 +218,10 @@ func (s *Server) RemoveValue(ctx context.Context, req *pb.RemoveValueRequest) (*
 	s.initialize()
 
 	if !s.IsLeader() {
-		return proxyRemoveValue(ctx, req, s.Leader())
+		if s.Proxy == nil {
+			return nil, errors.New("Failed to proxy request to the leader: No proxy mechanism configured")
+		}
+		return s.Proxy.RemoveValue(ctx, req, s.Leader())
 	}
 
 	if len(req.Source) == 0 {
@@ -235,7 +248,10 @@ func (s *Server) RemoveSource(ctx context.Context, req *pb.RemoveSourceRequest) 
 	s.initialize()
 
 	if !s.IsLeader() {
-		return proxyRemoveSource(ctx, req, s.Leader())
+		if s.Proxy == nil {
+			return nil, errors.New("Failed to proxy request to the leader: No proxy mechanism configured")
+		}
+		return s.Proxy.RemoveSource(ctx, req, s.Leader())
 	}
 
 	if len(req.Source) == 0 {
