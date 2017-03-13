@@ -70,7 +70,7 @@ func run() (status int) {
 		keyPath    = "server.key"
 		caPath     = "ca.crt"
 		raftDir    = "raftDir"
-		serverName = "serverName"
+		serverName = "Iris"
 		port       = iris.DefaultServicePort
 		joinAddr   = ""
 	)
