@@ -250,7 +250,7 @@ func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, 
 	flag.StringVar(stelaAddr, "stela", *stelaAddr, "Address of the stela service you would like to use for discovery")
 	flag.StringVar(certPath, "cert", *certPath, "Path to the certificate file for the server.")
 	flag.StringVar(keyPath, "key", *keyPath, "Path to the private key file for the server.")
-	flag.StringVar(caPath, "ca", *caPath, "Path to the private key file for the server.")
+	flag.StringVar(caPath, "ca", *caPath, "Path to the certificate authority for the server.")
 	flag.StringVar(serverName, "serverName", *serverName, "The common name of the server you are connecting to.")
 	flag.IntVar(port, "port", *port, "Port used for grpc communications.")
 	flag.StringVar(raftDir, "raftdir", *raftDir, "Directory used to store raft data.")

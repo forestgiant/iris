@@ -31,7 +31,7 @@ const (
 	valueParam      = "value"
 	addrUsage       = "Address of the stela server to connect to."
 	addrParam       = "addr"
-	serverNameUsage = "The name of the server you would like to "
+	serverNameUsage = "The common name of the server you would like to connect to."
 	serverNameParam = "serverName"
 	clientCertUsage = "Path to the certificate file for the client."
 	clientCertParam = "clientCert"
