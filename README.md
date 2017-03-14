@@ -51,4 +51,4 @@ After the raft log has been updated with a given value, the data managed by Iris
 ## Network Security
 Each instance of Iris listens on 2 TCP ports.  One port is used for the gRPC API and the other is used for communications between raft-members.  The raft port is automatically assigned to the port after the configured for the gRPC API.  While the gRPC port needs to be accessible to any clients wishing to use the API, the raft port needs only be accessible to other members of the raft-cluster.
 
-The gRPC API can be secured using Transport Layer Security (TLS) by providing the paths to both a SSL certificate and private key at startup.  This will ensure that all communication between the server and its clients is encrypted.
+The gRPC API can be secured using Transport Layer Security (TLS) by providing runtime flags representing paths to a SSL certificate and private key for the server, as well as a path to a cert for the certificate authority at startup.  By default, the application will attempt to use `server.crt`, `server.key`, and `ca.crt`.  This will ensure that all gRPC communication between the server and its clients is encrypted.
