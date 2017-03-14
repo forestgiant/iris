@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"gitlab.fg/otis/iris"
 	"gitlab.fg/otis/iris/pb"
 )
 
@@ -24,7 +25,7 @@ func ExampleNewTLSClient() {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
-	testClient, err := NewTLSClient(ctx, "127.0.0.1:32000", "Iris", "/path/to/client.crt", "/path/to/client.key", "/path/to/ca.crt")
+	testClient, err := NewTLSClient(ctx, "127.0.0.1:32000", iris.DefaultServerName, "/path/to/client.crt", "/path/to/client.key", "/path/to/ca.crt")
 	if err != nil {
 		//handle connection error
 		return

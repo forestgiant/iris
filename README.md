@@ -6,10 +6,10 @@ Iris uses the Raft Consensus Algorithm.  For more information, please read that 
 The first instance of Iris on a given computer can be started with the following command:
 
 ```
-iris -cert /path/to/server.cer -key /path/to/server.key
+iris -cert /path/to/server.crt -key /path/to/server.key -ca /path/to/ca.crt
 ```
 
-If the SSL files you wish to use are stored as `server.cer` and `server.key` in the directory where the command is issued, you can omit the `cert` and `key` parameters.
+If files named `server.crt`, `server.key`, and `ca.crt` are located in the directory where the command is issued, you can omit the `cert`, `key`, and `ca` parameters.
 
 ```
 iris
