@@ -8,11 +8,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/forestgiant/iris"
+	"github.com/forestgiant/iris/api"
+
 	fglog "github.com/forestgiant/log"
 	"github.com/forestgiant/stela"
 	stela_api "github.com/forestgiant/stela/api"
-	"gitlab.fg/otis/iris"
-	"gitlab.fg/otis/iris/api"
 )
 
 const (

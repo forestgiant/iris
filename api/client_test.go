@@ -13,12 +13,12 @@ import (
 	"github.com/forestgiant/portutil"
 	"google.golang.org/grpc"
 
+	"github.com/forestgiant/iris"
+	"github.com/forestgiant/iris/api"
+	"github.com/forestgiant/iris/pb"
+	"github.com/forestgiant/iris/store"
+	"github.com/forestgiant/iris/transport"
 	fglog "github.com/forestgiant/log"
-	"gitlab.fg/otis/iris"
-	"gitlab.fg/otis/iris/api"
-	"gitlab.fg/otis/iris/pb"
-	"gitlab.fg/otis/iris/store"
-	"gitlab.fg/otis/iris/transport"
 )
 
 var testClient *api.Client

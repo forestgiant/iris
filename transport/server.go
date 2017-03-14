@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"gitlab.fg/otis/iris/pb"
-	"gitlab.fg/otis/iris/store"
+	"github.com/forestgiant/iris/pb"
+	"github.com/forestgiant/iris/store"
 	"golang.org/x/net/context"
 )
 

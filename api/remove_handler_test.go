@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.fg/otis/iris/pb"
+	"github.com/forestgiant/iris/pb"
 )
 
 func TestRemoveHandler(t *testing.T) {

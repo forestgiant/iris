@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/forestgiant/iris/api"
 	fglog "github.com/forestgiant/log"
-	"gitlab.fg/otis/iris/api"
 )
 
 type runner struct {

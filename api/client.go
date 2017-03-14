@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	fggrpclog "github.com/forestgiant/grpclog"
-	"gitlab.fg/otis/iris/pb"
+	"github.com/forestgiant/iris/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"

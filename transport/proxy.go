@@ -6,8 +6,8 @@ import (
 	"net"
 	"strconv"
 
-	iris_api "gitlab.fg/otis/iris/api"
-	"gitlab.fg/otis/iris/pb"
+	iris_api "github.com/forestgiant/iris/api"
+	"github.com/forestgiant/iris/pb"
 )
 
 //Proxy is used to redirect request to an alternate Iris instance

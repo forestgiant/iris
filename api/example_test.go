@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"gitlab.fg/otis/iris"
-	"gitlab.fg/otis/iris/pb"
+	"github.com/forestgiant/iris"
+	"github.com/forestgiant/iris/pb"
 )
 
 func ExampleNewClient() {
