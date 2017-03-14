@@ -20,7 +20,7 @@ import (
 	"google.golang.org/grpc/grpclog"
 
 	"github.com/forestgiant/semver"
-	"gitlab.fg/go/stela"
+	"github.com/forestgiant/stela"
 	"gitlab.fg/otis/iris"
 	"gitlab.fg/otis/iris/pb"
 	"gitlab.fg/otis/iris/store"
@@ -28,7 +28,7 @@ import (
 
 	fggrpclog "github.com/forestgiant/grpclog"
 	fglog "github.com/forestgiant/log"
-	stela_api "gitlab.fg/go/stela/api"
+	stela_api "github.com/forestgiant/stela/api"
 	iris_api "gitlab.fg/otis/iris/api"
 )
 
@@ -62,21 +62,32 @@ func run() (status int) {
 	}
 
 	// Define our inputs
+	var defaultCaPath = "ca.crt"
+	var defaultKeyPath = "server.key"
+	var defaultCertPath = "server.crt"
+
 	var (
-		insecure   = false
-		nostela    = false
-		stelaAddr  = stela.DefaultStelaAddress
-		certPath   = "server.crt"
-		keyPath    = "server.key"
-		caPath     = "ca.crt"
-		raftDir    = "raftDir"
-		serverName = "Iris"
-		port       = iris.DefaultServicePort
-		joinAddr   = ""
+		insecure  = false
+		nostela   = false
+		stelaAddr = stela.DefaultStelaAddress
+
+		serverName = iris.DefaultServerName
+		caPath     = defaultCaPath
+		keyPath    = defaultKeyPath
+		certPath   = defaultCertPath
+
+		stelaServerName = stela.DefaultServerName
+		stelaCAPath     = defaultCaPath
+		stelaKeyPath    = defaultKeyPath
+		stelaCertPath   = defaultCertPath
+
+		raftDir  = "raftDir"
+		port     = iris.DefaultServicePort
+		joinAddr = ""
 	)
 
 	// Parse, prepare, and validate inputs
-	if err := prepareInputs(&port, &insecure, &nostela, &stelaAddr, &certPath, &keyPath, &caPath, &serverName, &raftDir, &joinAddr); err != nil {
+	if err := prepareInputs(&port, &insecure, &nostela, &stelaAddr, &certPath, &keyPath, &caPath, &serverName, &stelaCertPath, &stelaKeyPath, &stelaCAPath, &stelaServerName, &raftDir, &joinAddr); err != nil {
 		logger.Error("Error parsing inputs.", "error", err.Error())
 		return exitStatusError
 	}
@@ -88,7 +99,13 @@ func run() (status int) {
 	if !nostela {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 		defer cancelFunc()
-		client, err = stela_api.NewClient(ctx, stelaAddr, certPath)
+
+		if insecure {
+			client, err = stela_api.NewClient(ctx, stelaAddr, nil)
+		} else {
+			client, err = stela_api.NewTLSClient(ctx, stelaAddr, stelaServerName, stelaCertPath, stelaKeyPath, stelaCAPath)
+		}
+
 		if err != nil {
 			logger.Error("Failed to obtain stela client.", "error", err.Error())
 			os.Exit(1)
@@ -117,7 +134,7 @@ func run() (status int) {
 	if !nostela {
 		registerCtx, cancelRegister := context.WithTimeout(context.Background(), timeout)
 		defer cancelRegister()
-		if err := client.RegisterService(registerCtx, service); err != nil {
+		if err := client.Register(registerCtx, service); err != nil {
 			logger.Error("Failed to register service.", "error", err.Error())
 			return exitStatusError
 		}
@@ -125,7 +142,7 @@ func run() (status int) {
 		defer func() {
 			deregisterCtx, cancelDeregister := context.WithTimeout(context.Background(), timeout)
 			defer cancelDeregister()
-			client.DeregisterService(deregisterCtx, service)
+			client.Deregister(deregisterCtx, service)
 		}()
 	}
 
@@ -243,15 +260,22 @@ func fetchJoinAddress(client *stela_api.Client) (string, error) {
 	return services[0].IPv4Address(), nil
 }
 
-func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, caPath *string, serverName *string, raftDir *string, joinAddr *string) error {
+func prepareInputs(port *int, insecure *bool, nostela *bool, stelaAddr *string, certPath *string, keyPath *string, caPath *string, serverName *string, stelaCertPath *string, stelaKeyPath *string, stelaCAPath *string, stelaServerName *string, raftDir *string, joinAddr *string) error {
 	// Parse command line flags
 	flag.BoolVar(insecure, "insecure", *insecure, "Disable SSL, allowing unenecrypted communication with this service.")
 	flag.BoolVar(nostela, "nostela", *nostela, "Disable automatic stela registration.")
 	flag.StringVar(stelaAddr, "stela", *stelaAddr, "Address of the stela service you would like to use for discovery")
+
 	flag.StringVar(certPath, "cert", *certPath, "Path to the certificate file for the server.")
 	flag.StringVar(keyPath, "key", *keyPath, "Path to the private key file for the server.")
 	flag.StringVar(caPath, "ca", *caPath, "Path to the certificate authority for the server.")
 	flag.StringVar(serverName, "serverName", *serverName, "The common name of the server you are connecting to.")
+
+	flag.StringVar(stelaCertPath, "stleaCert", *stelaCertPath, "Path to the certificate file for the stela server.")
+	flag.StringVar(stelaKeyPath, "stelaKey", *stelaKeyPath, "Path to the private key file for the stela server.")
+	flag.StringVar(stelaCAPath, "stelaCA", *stelaCAPath, "Path to the certificate authority for the stela server.")
+	flag.StringVar(stelaServerName, "stelaServerName", *stelaServerName, "The common name of the stela server you are connecting to.")
+
 	flag.IntVar(port, "port", *port, "Port used for grpc communications.")
 	flag.StringVar(raftDir, "raftdir", *raftDir, "Directory used to store raft data.")
 	flag.StringVar(joinAddr, "join", *joinAddr, "Address of the raft cluster leader you would like to join.")

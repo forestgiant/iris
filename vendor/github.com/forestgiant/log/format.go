@@ -1,6 +1,7 @@
 package log
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,7 +29,7 @@ func (f JSONFormatter) Format(writer io.Writer, keyvals ...interface{}) error {
 
 		k, ok := keyvals[i].(string)
 		if !ok {
-			return errors.New("Could not Marshal key-value pairs to JSON.")
+			return errors.New("Could not Marshal key-value pairs to JSON")
 		}
 
 		vg, ok := keyvals[i+1].(ValueGenerator)
@@ -39,13 +40,15 @@ func (f JSONFormatter) Format(writer io.Writer, keyvals ...interface{}) error {
 		}
 	}
 
-	bytes, err := json.Marshal(m)
-	if err != nil {
+	buf := new(bytes.Buffer)
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(m); err != nil {
 		return err
 	}
 
-	outputString := fmt.Sprintf("%s\n", bytes)
-	_, err = writer.Write([]byte(outputString))
+	outputString := fmt.Sprintf("%s", buf.Bytes())
+	_, err := writer.Write([]byte(outputString))
 	return err
 }
 

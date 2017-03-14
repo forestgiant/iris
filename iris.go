@@ -9,6 +9,9 @@ const (
 	//DefaultServiceName for the iris service
 	DefaultServiceName = "iris.service.fg"
 
+	//DefaultServerName represents the expected common name for this server
+	DefaultServerName = "Iris"
+
 	//DefaultIdentifier is the default identifier for sources to use in their implementations
 	DefaultIdentifier = "default"
 )

@@ -21,7 +21,7 @@
 		},
 		{
 			"ImportPath": "github.com/forestgiant/log",
-			"Rev": "d9a58e709cc6358735b3841ffa5d4fdc4621b066"
+			"Rev": "d54ab7bd91fd4bd72c98964489c00653cad2ab12"
 		},
 		{
 			"ImportPath": "github.com/forestgiant/netutil",
@@ -35,6 +35,18 @@
 			"ImportPath": "github.com/forestgiant/semver",
 			"Comment": "0.2.1-1-g939ef23",
 			"Rev": "939ef230d0c76c1220bcd24495dc76f7437c168f"
+		},
+		{
+			"ImportPath": "github.com/forestgiant/stela",
+			"Rev": "c560cca72ba48f163bd0c275f434411b896ffeb1"
+		},
+		{
+			"ImportPath": "github.com/forestgiant/stela/api",
+			"Rev": "c560cca72ba48f163bd0c275f434411b896ffeb1"
+		},
+		{
+			"ImportPath": "github.com/forestgiant/stela/pb",
+			"Rev": "c560cca72ba48f163bd0c275f434411b896ffeb1"
 		},
 		{
 			"ImportPath": "github.com/go-logfmt/logfmt",
@@ -64,18 +76,6 @@
 		{
 			"ImportPath": "github.com/miekg/dns",
 			"Rev": "f4d2b086946a624202dc59e6a43f72e8f3f02bc1"
-		},
-		{
-			"ImportPath": "gitlab.fg/go/stela",
-			"Rev": "3c24c34d9d811ccc3d180f6c0a8f382ade00fce5"
-		},
-		{
-			"ImportPath": "gitlab.fg/go/stela/api",
-			"Rev": "3c24c34d9d811ccc3d180f6c0a8f382ade00fce5"
-		},
-		{
-			"ImportPath": "gitlab.fg/go/stela/pb",
-			"Rev": "3c24c34d9d811ccc3d180f6c0a8f382ade00fce5"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",

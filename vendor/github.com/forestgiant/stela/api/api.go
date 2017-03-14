@@ -1,18 +1,31 @@
 package api
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"sync"
 
 	"github.com/forestgiant/netutil"
-	"gitlab.fg/go/stela"
-	"gitlab.fg/go/stela/pb"
+	"github.com/forestgiant/stela"
+	"github.com/forestgiant/stela/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/grpclog"
+
+	fggrpclog "github.com/forestgiant/grpclog"
 )
 
+func init() {
+	grpclog.SetLogger(&fggrpclog.Suppressed{})
+}
+
+// Client struct represents a connection client connection to a stela instance
 type Client struct {
 	stela.Client
 
@@ -24,24 +37,22 @@ type Client struct {
 	callbacks map[string]func(s *stela.Service)
 }
 
-func NewClient(ctx context.Context, stelaAddress string, caFile string) (*Client, error) {
+// NewClient returns a new Stela gRPC client for the given server address.
+// The client's Close method should be called when the returned client is no longer needed.
+func NewClient(ctx context.Context, stelaAddress string, opts []grpc.DialOption) (*Client, error) {
 	c := &Client{}
 	host, err := os.Hostname()
 	if err != nil {
 		return nil, err
 	}
-	// c.ctx = ctx
 	c.Hostname = host
 	c.Address = netutil.LocalIPv4().String()
 
-	var opts []grpc.DialOption
-	// creds, err := credentials.NewClientTLSFromFile(caFile, "")
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// opts = append(opts, grpc.WithTransportCredentials(creds))
-	opts = append(opts, grpc.WithInsecure())
+	if len(opts) == 0 {
+		opts = append(opts, grpc.WithInsecure())
+	}
+	opts = append(opts, grpc.FailOnNonTempDialError(true))
+	opts = append(opts, grpc.WithBlock())
 	c.conn, err = grpc.Dial(stelaAddress, opts...)
 	if err != nil {
 		return nil, err
@@ -61,6 +72,44 @@ func NewClient(ctx context.Context, stelaAddress string, caFile string) (*Client
 	}
 
 	return c, nil
+}
+
+// NewTLSClient returns a new Stela gRPC client for the given server address.  You must provide paths to a
+// certificate authority, client certificate, and client private key.  You must also provide a value for
+// server name that matches the common name in the certificate of the server you are connecting to.
+// The client's Close method should be called when the returned client is no longer needed.
+func NewTLSClient(ctx context.Context, serverAddress string, serverName string, cert string, privateKey string, certificateAuthority string) (*Client, error) {
+	var opts []grpc.DialOption
+	if len(cert) == 0 || len(privateKey) == 0 || len(certificateAuthority) == 0 || len(serverName) == 0 {
+		return nil, errors.New("Insufficient security credentials provided")
+	}
+
+	// Load the client certificates from disk
+	certificate, err := tls.LoadX509KeyPair(cert, privateKey)
+	if err != nil {
+		return nil, fmt.Errorf("Could not load client key pair: %s", err)
+	}
+
+	// Create a certificate pool from the certificate authority
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile(certificateAuthority)
+	if err != nil {
+		return nil, fmt.Errorf("Could not read ca certificate: %s", err)
+	}
+
+	// Append the certificates from the CA
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		return nil, errors.New("Failed to append ca certs")
+	}
+
+	creds := credentials.NewTLS(&tls.Config{
+		ServerName:   serverName,
+		Certificates: []tls.Certificate{certificate},
+		RootCAs:      certPool,
+	})
+
+	opts = append(opts, grpc.WithTransportCredentials(creds))
+	return NewClient(ctx, serverAddress, opts)
 }
 
 func (c *Client) init() {
@@ -99,7 +148,7 @@ func (c *Client) connect() error {
 					Port:     rs.Port,
 					Priority: rs.Priority,
 					Action:   rs.Action,
-					Value:    stela.DecodeValue(rs.Value),
+					Value:    rs.Value,
 				})
 				c.mu.RUnlock()
 			}
@@ -109,6 +158,7 @@ func (c *Client) connect() error {
 	return nil
 }
 
+// Subscribe stores a callback to the service name and notifies the stela instance to notify your client on changes.
 func (c *Client) Subscribe(ctx context.Context, serviceName string, callback func(s *stela.Service)) error {
 	_, err := c.rpc.Subscribe(ctx,
 		&pb.SubscribeRequest{
@@ -129,6 +179,8 @@ func (c *Client) Subscribe(ctx context.Context, serviceName string, callback fun
 	return nil
 }
 
+// Unsubscribe removes the callback to the service name and let's the stela instance know the client
+// doesn't want updates on that serviceName.
 func (c *Client) Unsubscribe(ctx context.Context, serviceName string) error {
 	if c.callbacks == nil {
 		return errors.New("Client hasn't subscribed")
@@ -151,7 +203,8 @@ func (c *Client) Unsubscribe(ctx context.Context, serviceName string) error {
 	return nil
 }
 
-func (c *Client) RegisterService(ctx context.Context, s *stela.Service) error {
+// Register registers a service to the stela instance the client is connected to.
+func (c *Client) Register(ctx context.Context, s *stela.Service) error {
 	s.Hostname = c.Hostname
 	if s.IPv4 == "" {
 		s.IPv4 = c.Address
@@ -166,7 +219,7 @@ func (c *Client) RegisterService(ctx context.Context, s *stela.Service) error {
 				IPv6:     s.IPv6,
 				Port:     s.Port,
 				Priority: s.Priority,
-				Value:    stela.EncodeValue(s.Value),
+				Value:    s.Value,
 			},
 		})
 	if err != nil {
@@ -176,7 +229,8 @@ func (c *Client) RegisterService(ctx context.Context, s *stela.Service) error {
 	return nil
 }
 
-func (c *Client) DeregisterService(ctx context.Context, s *stela.Service) error {
+// Deregister deregisters a service to the stela instance the client is connected to.
+func (c *Client) Deregister(ctx context.Context, s *stela.Service) error {
 	// s.IPv4 = c.Address
 	s.Hostname = c.Hostname
 	_, err := c.rpc.Deregister(ctx,
@@ -198,8 +252,9 @@ func (c *Client) DeregisterService(ctx context.Context, s *stela.Service) error 
 	return nil
 }
 
+// Discover services registered with the same service name.
 func (c *Client) Discover(ctx context.Context, serviceName string) ([]*stela.Service, error) {
-	resp, err := c.rpc.PeerDiscover(ctx, &pb.DiscoverRequest{ServiceName: serviceName})
+	resp, err := c.rpc.Discover(ctx, &pb.DiscoverRequest{ServiceName: serviceName})
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +269,7 @@ func (c *Client) Discover(ctx context.Context, serviceName string) ([]*stela.Ser
 			IPv6:     ds.IPv6,
 			Port:     ds.Port,
 			Priority: ds.Priority,
-			Value:    stela.DecodeValue(ds.Value),
+			Value:    ds.Value,
 		}
 		services = append(services, s)
 	}
@@ -222,8 +277,34 @@ func (c *Client) Discover(ctx context.Context, serviceName string) ([]*stela.Ser
 	return services, nil
 }
 
+// DiscoverRegex finds services by name based on a regular expression.
+func (c *Client) DiscoverRegex(ctx context.Context, reg string) ([]*stela.Service, error) {
+	resp, err := c.rpc.DiscoverRegex(ctx, &pb.DiscoverRequest{ServiceName: reg})
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert response to stela services
+	var services []*stela.Service
+	for _, ds := range resp.Services {
+		s := &stela.Service{
+			Name:     ds.Name,
+			Hostname: ds.Hostname,
+			IPv4:     ds.IPv4,
+			IPv6:     ds.IPv6,
+			Port:     ds.Port,
+			Priority: ds.Priority,
+			Value:    ds.Value,
+		}
+		services = append(services, s)
+	}
+
+	return services, nil
+}
+
+// DiscoverOne finds a single instance of a service based on name.
 func (c *Client) DiscoverOne(ctx context.Context, serviceName string) (*stela.Service, error) {
-	resp, err := c.rpc.PeerDiscoverOne(ctx, &pb.DiscoverRequest{ServiceName: serviceName})
+	resp, err := c.rpc.DiscoverOne(ctx, &pb.DiscoverRequest{ServiceName: serviceName})
 	if err != nil {
 		return nil, err
 	}
@@ -236,12 +317,13 @@ func (c *Client) DiscoverOne(ctx context.Context, serviceName string) (*stela.Se
 		IPv6:     resp.IPv6,
 		Port:     resp.Port,
 		Priority: resp.Priority,
-		Value:    stela.DecodeValue(resp.Value),
+		Value:    resp.Value,
 	}, nil
 }
 
+// DiscoverAll finds all services registered.
 func (c *Client) DiscoverAll(ctx context.Context) ([]*stela.Service, error) {
-	resp, err := c.rpc.PeerDiscoverAll(ctx, &pb.DiscoverAllRequest{})
+	resp, err := c.rpc.DiscoverAll(ctx, &pb.DiscoverAllRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +338,7 @@ func (c *Client) DiscoverAll(ctx context.Context) ([]*stela.Service, error) {
 			IPv6:     ds.IPv6,
 			Port:     ds.Port,
 			Priority: ds.Priority,
-			Value:    stela.DecodeValue(ds.Value),
+			Value:    ds.Value,
 		}
 		services = append(services, s)
 	}
@@ -264,6 +346,7 @@ func (c *Client) DiscoverAll(ctx context.Context) ([]*stela.Service, error) {
 	return services, nil
 }
 
+// Close cancels the stream to the gRPC stream established by connect().
 func (c *Client) Close() {
 
 	c.conn.Close()

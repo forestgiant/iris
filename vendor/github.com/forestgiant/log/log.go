@@ -8,7 +8,7 @@ import (
 )
 
 //ErrIgnoredLogLevel is the error returned when a logger ignores the log at the current level configuration
-var ErrIgnoredLogLevel = errors.New("Log level is ignored by the logger.")
+var ErrIgnoredLogLevel = errors.New("Log level is ignored by the logger")
 
 // Logger implements the Logger interface as well as some helper methods for leveled logging.
 type Logger struct {
