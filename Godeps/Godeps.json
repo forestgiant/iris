@@ -1,5 +1,5 @@
 {
-	"ImportPath": "gitlab.fg/otis/iris",
+	"ImportPath": "github.com/forestgiant/iris",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Packages": [
