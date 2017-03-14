@@ -154,6 +154,8 @@ func run() (status int) {
 		logger.Error("Unable to determine grpc address.", err)
 		return exitStatusError
 	}
+
+	listenAddr := net.JoinHostPort("", strconv.Itoa(port))
 	grpcAddr := net.JoinHostPort(host, strconv.Itoa(port))
 	raftAddr := net.JoinHostPort(host, strconv.Itoa(raftPort))
 	logger = logger.With("raftAddr", raftAddr, "grpcAddr", grpcAddr)
@@ -174,7 +176,7 @@ func run() (status int) {
 
 	// Serve our remote procedures
 	go func() {
-		l, err := net.Listen("tcp", service.IPv4Address())
+		l, err := net.Listen("tcp", listenAddr)
 		if err != nil {
 			errchan <- fmt.Errorf("Failed to start tcp listener. %s", err)
 		}
