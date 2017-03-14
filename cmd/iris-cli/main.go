@@ -159,7 +159,6 @@ func run() (status int) {
 			discoverCtx, cancelDiscover := context.WithTimeout(context.Background(), 200*time.Millisecond)
 			defer cancelDiscover()
 			service, err := stelaclient.DiscoverOne(discoverCtx, iris.DefaultServiceName)
-			fmt.Println(err)
 			if err == nil {
 				addr = service.IPv4Address()
 			}
