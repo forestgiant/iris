@@ -1,4 +1,9 @@
-# Iris
+![Iris](https://dl.dropboxusercontent.com/s/07xoqwa2wsq622j/fg-github-iris.png?dl=0 "Iris logo")
+
+
+[![Docs](https://dl.dropboxusercontent.com/s/a1ebd9j8kkqzzk9/github-button-iris.png?dl=0 "Iris API Docs")](https://docs.forestgiant.com/iris/api/)
+[![Gitter](https://dl.dropboxusercontent.com/s/j38ui4m1vwhb7qq/github-button-chat.png "Iris on Gitter")](https://gitter.im/forestgiant/Lobby)
+
 This microservice provides mechanisms for the organization, storage, and retrieval of data in the form of key-value pairs.  These pairs can be stored into logical groups, and shared with any device capable of communicating with Iris using Google's gRPC protocol.  Iris instances can easily be joined into a cluster, and will then use the Raft Consensus Algorithm to maintain data integrity and provide fault-tolerance.
 
 ## Running Iris Nodes
